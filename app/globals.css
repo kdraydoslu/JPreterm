@@ -1,0 +1,293 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --green: #00ff9d;
+  --cyan: #00f0ff;
+  --magenta: #ff00aa;
+  --red: #ff2244;
+  --orange: #ff7700;
+  --yellow: #ffcc00;
+  --bg: #050100;
+  --bg2: #1a0500;
+  --bg3: #280a00;
+  --panel: rgba(10, 3, 0, 0.6);
+  --border: rgba(255, 119, 0, 0.2);
+  --border-bright: rgba(255, 119, 0, 0.5);
+  --glow-green: 0 0 8px #00ff9d, 0 0 20px rgba(0, 255, 157, 0.3);
+  --glow-cyan: 0 0 8px #00f0ff, 0 0 20px rgba(0, 240, 255, 0.3);
+  --glow-red: 0 0 8px #ff2244, 0 0 20px rgba(255, 34, 68, 0.3);
+  --glow-mag: 0 0 8px #ff00aa, 0 0 20px rgba(255, 0, 170, 0.3);
+  --glow-orange: 0 0 8px #ff7700, 0 0 20px rgba(255, 119, 0, 0.4);
+  --glow-yellow: 0 0 8px #ffcc00, 0 0 20px rgba(255, 204, 0, 0.4);
+
+  --background: #050100;
+  --foreground: #ffeedd;
+  --card: rgba(10, 3, 0, 0.6);
+  --card-foreground: #ffeedd;
+  --popover: rgba(10, 3, 0, 0.85);
+  --popover-foreground: #ffeedd;
+  --primary: #ff7700;
+  --primary-foreground: #050100;
+  --secondary: rgba(255, 119, 0, 0.15);
+  --secondary-foreground: #ff7700;
+  --muted: rgba(10, 3, 0, 0.5);
+  --muted-foreground: rgba(255, 238, 221, 0.5);
+  --accent: rgba(255, 119, 0, 0.1);
+  --accent-foreground: #ff7700;
+  --destructive: #ff2244;
+  --destructive-foreground: #ffffff;
+  --border-color: rgba(255, 119, 0, 0.2);
+  --input: rgba(255, 119, 0, 0.1);
+  --ring: #ff7700;
+  --radius: 0.25rem;
+}
+
+@theme inline {
+  --font-sans: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border-color);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-green: var(--green);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-red: var(--red);
+  --color-orange: var(--orange);
+  --color-yellow: var(--yellow);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 11px;
+    overflow: hidden;
+  }
+}
+
+/* Scanlines effect */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 119, 0, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 0% 50%, rgba(255, 119, 0, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 50%, rgba(255, 0, 170, 0.03) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Animations */
+@keyframes pnlPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes winPulse {
+  0%,
+  100% {
+    box-shadow: var(--glow-green);
+  }
+  50% {
+    box-shadow: 0 0 15px #00ff9d, 0 0 40px rgba(0, 255, 157, 0.4);
+  }
+}
+
+@keyframes liveBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes logoShimmer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes confAnim {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes hotPulse {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(255, 0, 170, 0.6);
+  }
+}
+
+@keyframes metricFlick {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes execFlash {
+  0% {
+    background: rgba(0, 240, 255, 0.1);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+@keyframes sigFade {
+  0% {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fundingPulse {
+  0%,
+  100% {
+    color: var(--cyan);
+  }
+  50% {
+    color: var(--green);
+  }
+}
+
+@keyframes profitAnim {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes riskAnim {
+  0%,
+  100% {
+    width: 68%;
+  }
+  50% {
+    width: 72%;
+  }
+}
+
+@keyframes newsSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes whaleSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 20, 40, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 119, 0, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 119, 0, 0.5);
+}
