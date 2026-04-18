@@ -51,6 +51,9 @@ export function Overview() {
   const [activities, setActivities] = useState<string[]>([])
 
   useEffect(() => {
+    let mounted = true
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT']
+
     // Initial Config Check
     if (typeof window !== 'undefined') {
       const savedConfig = localStorage.getItem('polymarket_config')
