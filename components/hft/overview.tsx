@@ -54,12 +54,22 @@ export function Overview() {
     let mounted = true
     const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT']
 
+    // Initialize portfolio history
+    setPortfolioHistory(Array(50).fill(0).map((_, i) => 1000 + Math.sin(i / 5) * 50 + Math.random() * 20))
+
     // Initial Config Check
     if (typeof window !== 'undefined') {
       const savedConfig = localStorage.getItem('polymarket_config')
       if (savedConfig) {
-        setIsConfigured(true)
-        updatePolymarketStats()
+        try {
+          const config = JSON.parse(savedConfig)
+          if (config.apiKey && config.walletAddress) {
+            setIsConfigured(true)
+            updatePolymarketStats()
+          }
+        } catch (e) {
+          console.error('Failed to parse polymarket config:', e)
+        }
       }
     }
 
