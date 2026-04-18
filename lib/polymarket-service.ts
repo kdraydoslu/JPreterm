@@ -72,37 +72,50 @@ class PolymarketService {
 
   async fetchMarkets(category: string = 'all'): Promise<Market[]> {
     try {
-      // Use Polymarket Gamma API for public market data (doesn't require config)
-      const baseUrl = 'https://gamma-api.polymarket.com/markets'
-      const queryParams = new URLSearchParams({
-        active: 'true',
-        closed: 'false',
-        order: 'volume',
-        dir: 'desc',
-        limit: '20'
-      })
+      // Use Gamma API events/markets endpoint for better discovery
+      const url = `https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume&dir=desc&limit=25`
       
-      if (category !== 'all') {
-        queryParams.append('tag', category)
-      }
-
-      const response = await fetch(`${baseUrl}?${queryParams.toString()}`)
-      if (!response.ok) throw new Error(`Failed to fetch markets: ${response.status}`)
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
       const data = await response.json()
       
-      // Map Gamma API data to our Market interface
-      this.markets = data.map((m: any) => {
-        const prices = JSON.parse(m.outcomePrices || '["0.5", "0.5"]')
+      if (!Array.isArray(data)) return []
+
+      // Map and filter by category if needed
+      const filtered = data.filter((m: any) => {
+        if (!m.question || !m.outcomePrices) return false
+        if (category === 'all') return true
+        
+        // Map UI categories to API tags/groups
+        const tag = (m.groupItemTitle || m.category || '').toLowerCase()
+        return tag.includes(category.toLowerCase())
+      })
+
+      this.markets = filtered.map((m: any) => {
+        let prices = [0.5, 0.5]
+        try {
+          if (typeof m.outcomePrices === 'string') {
+            prices = JSON.parse(m.outcomePrices).map((p: string) => parseFloat(p))
+          } else if (Array.isArray(m.outcomePrices)) {
+            prices = m.outcomePrices.map((p: any) => parseFloat(p))
+          } else if (m.outcomes && m.outcomes.length > 0) {
+             // Fallback to equal weights if prices missing
+             prices = m.outcomes.map(() => 0.5)
+          }
+        } catch (e) {
+          console.warn('Price parsing failed for market:', m.id, e)
+        }
+
         return {
-          id: m.id,
-          question: m.question,
-          category: m.groupItemTitle || 'General',
-          yes: parseFloat(prices[0]) * 100,
-          no: parseFloat(prices[1]) * 100,
-          volume: `$${(parseFloat(m.volume) / 1000).toFixed(1)}K`,
-          liquidity: `$${(parseFloat(m.liquidity) / 1000).toFixed(1)}K`,
-          endDate: m.endDate,
-          trending: parseFloat(m.volume24hr) > 10000,
+          id: m.id || m.conditionId || Math.random().toString(),
+          question: m.question || 'Unknown Market',
+          category: m.groupItemTitle || m.category || 'General',
+          yes: (prices[0] || 0.5) * 100,
+          no: (prices[1] || 0.5) * 100,
+          volume: m.volume ? `$${(parseFloat(m.volume) / 1000000).toFixed(1)}M` : '$0M',
+          liquidity: m.liquidity ? `$${(parseFloat(m.liquidity) / 1000).toFixed(1)}K` : '$0K',
+          endDate: m.endDate || 'N/A',
+          trending: parseFloat(m.volume24hr || '0') > 50000,
           live: m.active && !m.closed
         }
       })
