@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { polymarketService, type Market, type Position, type Trade, type WalletBalance } from '@/lib/polymarket-service'
+import { marketDataService } from '@/lib/market-data'
 
 type Mode = 'SAFE' | 'AGGRESSIVE' | 'DEGEN'
 type Asset = 'BTC' | 'ETH' | 'SOL' | 'XRP'
@@ -39,18 +40,23 @@ function calculateSignal(currentPrice: number, openPrice: number): StrategySigna
   let score = 0
   const indicators = { delta: 0, momentum: 0, acceleration: 0, ema: 0, rsi: 0, volume: 0, tick: 0 }
 
-  if (Math.abs(windowDeltaPct) > 0.10) indicators.delta = windowDeltaPct > 0 ? 7 : -7
-  else if (Math.abs(windowDeltaPct) > 0.02) indicators.delta = windowDeltaPct > 0 ? 5 : -5
-  else if (Math.abs(windowDeltaPct) > 0.005) indicators.delta = windowDeltaPct > 0 ? 3 : -3
+  // Simple Trend following logic based on real price action
+  if (Math.abs(windowDeltaPct) > 0.05) indicators.delta = windowDeltaPct > 0 ? 6 : -6
+  else if (Math.abs(windowDeltaPct) > 0.01) indicators.delta = windowDeltaPct > 0 ? 4 : -4
+  else indicators.delta = windowDeltaPct > 0 ? 1 : -1
+  
   score += indicators.delta
-
-  indicators.momentum = (Math.random() - 0.5) * 4
-  indicators.acceleration = (Math.random() - 0.5) * 3
-  indicators.tick = (windowDeltaPct > 0 ? 1 : -1) * (Math.random() * 2)
+  
+  // Simulated but deterministic indicators based on price hash to avoid random jitter
+  const priceSeed = Math.floor(currentPrice * 100) % 100
+  indicators.momentum = (priceSeed / 50 - 1) * 3
+  indicators.acceleration = ((priceSeed % 10) / 5 - 1) * 2
+  indicators.tick = windowDeltaPct > 0 ? 1.2 : -1.2
+  
   score += indicators.momentum + indicators.acceleration + indicators.tick
 
-  const confidence = Math.min(Math.abs(score) / 7.0, 1.0)
-  const direction = score > 0.5 ? 'UP' : score < -0.5 ? 'DOWN' : 'NEUTRAL'
+  const confidence = Math.min(Math.abs(score) / 10.0, 1.0)
+  const direction = score > 1.0 ? 'UP' : score < -1.0 ? 'DOWN' : 'NEUTRAL'
   return { score, confidence, direction, indicators }
 }
 
@@ -121,10 +127,12 @@ export function PredictionMarkets() {
 
   // Fetch data immediately on mount
   useEffect(() => {
+    // Markets can be fetched without config (public API)
+    polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
+
     if (!isConfigured) return
 
-    // Fetch from API
-    polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
+    // Sensitive data requires config
     polymarketService.fetchPositions().then(setPositions)
     polymarketService.fetchTrades().then(setTrades)
     polymarketService.fetchBalance().then(setBalance)
@@ -134,7 +142,7 @@ export function PredictionMarkets() {
       polymarketService.fetchPositions().then(setPositions)
       polymarketService.fetchTrades().then(setTrades)
       polymarketService.fetchBalance().then(setBalance)
-    }, 5000)
+    }, 10000)
 
     return () => clearInterval(interval)
   }, [isConfigured, selectedCategory])
@@ -149,13 +157,17 @@ export function PredictionMarkets() {
   }, [])
   
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAssetPrice((prev) => prev + (Math.random() - 0.5) * 100)
-      const openPrice = currentAssetPrice * 0.9999
-      setSignal(calculateSignal(currentAssetPrice, openPrice))
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [currentAssetPrice])
+    const symbol = `${selectedAsset}USDT`
+    marketDataService.subscribeTicker(symbol, (data) => {
+      const price = parseFloat(data.price)
+      setCurrentAssetPrice(price)
+      // Use the daily open or a fixed offset for window opening comparison
+      const openPrice = price * (1 - (parseFloat(data.priceChangePercent) / 100))
+      setSignal(calculateSignal(price, openPrice))
+    })
+    
+    return () => marketDataService.unsubscribe(symbol)
+  }, [selectedAsset])
 
   const filteredMarkets = selectedCategory === 'all' ? markets : markets.filter((m) => m.category === selectedCategory)
   const currentSignal = signal || initialSignal || calculateSignal(currentAssetPrice, currentAssetPrice * 0.9999)

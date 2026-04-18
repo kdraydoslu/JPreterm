@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { polymarketService } from '@/lib/polymarket-service'
 
 export function TopBar() {
   const [time, setTime] = useState('--:--:--.---')
-  const [pnl, setPnl] = useState(1583336)
-  const [winRate, setWinRate] = useState(95)
-  const [riskDeployed, setRiskDeployed] = useState(68.4)
+  const [pnl, setPnl] = useState(0)
+  const [winRate, setWinRate] = useState(0)
+  const [riskDeployed, setRiskDeployed] = useState(0)
+  const [totalValue, setTotalValue] = useState(0)
+  const [isConfigured, setIsConfigured] = useState(false)
 
   useEffect(() => {
     const clockInterval = setInterval(() => {
@@ -18,17 +21,23 @@ export function TopBar() {
       setTime(`${h}:${m}:${s}.${ms}`)
     }, 50)
 
-    const pnlInterval = setInterval(() => {
-      setPnl((prev) => prev + (Math.random() - 0.45) * 500)
-      setRiskDeployed((prev) => {
-        const newVal = prev + (Math.random() - 0.5) * 2
-        return Math.max(50, Math.min(90, newVal))
-      })
-    }, 300)
+    const checkConfig = () => {
+      if (typeof window !== 'undefined') {
+        const savedConfig = localStorage.getItem('polymarket_config')
+        if (savedConfig) {
+          setIsConfigured(true)
+          polymarketService.fetchBalance().then(bal => setTotalValue(bal.usdc + (bal.eth * 3500)))
+          polymarketService.fetchPositions().then(pos => setPnl(pos.reduce((acc, p) => acc + p.pnl, 0)))
+        }
+      }
+    }
+
+    checkConfig()
+    const configInterval = setInterval(checkConfig, 30000)
 
     return () => {
       clearInterval(clockInterval)
-      clearInterval(pnlInterval)
+      clearInterval(configInterval)
     }
   }, [])
 
@@ -74,15 +83,15 @@ export function TopBar() {
         <div className="flex gap-2.5 items-center">
           <div>
             <div className="text-[6px] text-[rgba(255,119,0,0.5)]">Total Value</div>
-            <div className="font-mono text-[10px] text-[#ff7700]">$2.4M</div>
+            <div className="font-mono text-[10px] text-[#ff7700]">${(totalValue / 1000).toFixed(1)}K</div>
           </div>
           <div>
             <div className="text-[6px] text-[rgba(255,119,0,0.5)]">Open Positions</div>
-            <div className="font-mono text-[10px] text-[#ffcc00]">8</div>
+            <div className="font-mono text-[10px] text-[#ffcc00]">{isConfigured ? 'AUTO' : '0'}</div>
           </div>
           <div>
             <div className="text-[6px] text-[rgba(255,119,0,0.5)]">24h P&L</div>
-            <div className="font-mono text-[10px] text-[#00ff9d]">+$12.4K</div>
+            <div className="font-mono text-[10px] text-[#00ff9d]">{formatPnl(pnl)}</div>
           </div>
         </div>
       </div>

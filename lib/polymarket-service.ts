@@ -71,15 +71,42 @@ class PolymarketService {
   }
 
   async fetchMarkets(category: string = 'all'): Promise<Market[]> {
-    if (!this.config) return []
-
     try {
-      // Use Polymarket CLOB API
-      const response = await fetch(`https://clob.polymarket.com/markets?category=${category}`)
+      // Use Polymarket Gamma API for public market data (doesn't require config)
+      const baseUrl = 'https://gamma-api.polymarket.com/markets'
+      const queryParams = new URLSearchParams({
+        active: 'true',
+        closed: 'false',
+        order: 'volume',
+        dir: 'desc',
+        limit: '20'
+      })
+      
+      if (category !== 'all') {
+        queryParams.append('tag', category)
+      }
+
+      const response = await fetch(`${baseUrl}?${queryParams.toString()}`)
       if (!response.ok) throw new Error(`Failed to fetch markets: ${response.status}`)
       const data = await response.json()
       
-      this.markets = data.markets || []
+      // Map Gamma API data to our Market interface
+      this.markets = data.map((m: any) => {
+        const prices = JSON.parse(m.outcomePrices || '["0.5", "0.5"]')
+        return {
+          id: m.id,
+          question: m.question,
+          category: m.groupItemTitle || 'General',
+          yes: parseFloat(prices[0]) * 100,
+          no: parseFloat(prices[1]) * 100,
+          volume: `$${(parseFloat(m.volume) / 1000).toFixed(1)}K`,
+          liquidity: `$${(parseFloat(m.liquidity) / 1000).toFixed(1)}K`,
+          endDate: m.endDate,
+          trending: parseFloat(m.volume24hr) > 10000,
+          live: m.active && !m.closed
+        }
+      })
+      
       return this.markets
     } catch (error) {
       console.error('Failed to fetch markets:', error)

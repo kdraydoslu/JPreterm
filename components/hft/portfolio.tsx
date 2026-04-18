@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { marketDataService } from '@/lib/market-data'
+import { polymarketService, type Position as PolyPosition, type WalletBalance } from '@/lib/polymarket-service'
 
 interface Position {
   symbol: string
@@ -15,61 +16,41 @@ interface Position {
 }
 
 export function Portfolio() {
-  const [positions, setPositions] = useState<Position[]>([
-    { symbol: 'BTCUSDT', side: 'LONG', size: 0.5, entryPrice: 95234.50, currentPrice: 96100.00, pnl: 432.75, pnlPercent: 0.91, leverage: 5 },
-    { symbol: 'ETHUSDT', side: 'SHORT', size: 2.3, entryPrice: 3456.20, currentPrice: 3420.10, pnl: 83.03, pnlPercent: 1.04, leverage: 3 },
-    { symbol: 'SOLUSDT', side: 'LONG', size: 15, entryPrice: 142.30, currentPrice: 145.80, pnl: 52.50, pnlPercent: 2.46, leverage: 2 },
-  ])
-
-  const [totalValue, setTotalValue] = useState(2456789.45)
-  const [totalPnL, setTotalPnL] = useState(12456.78)
-  const [dailyPnL, setDailyPnL] = useState(3245.67)
+  const [positions, setPositions] = useState<Position[]>([])
+  const [polyPositions, setPolyPositions] = useState<PolyPosition[]>([])
+  const [totalValue, setTotalValue] = useState(0)
+  const [totalPnL, setTotalPnL] = useState(0)
+  const [dailyPnL, setDailyPnL] = useState(0)
+  const [balance, setBalance] = useState<WalletBalance>({ usdc: 0, eth: 0, available: 0 })
+  const [isConfigured, setIsConfigured] = useState(false)
 
   useEffect(() => {
-    let mounted = true
-
-    // Update positions with real prices
-    positions.forEach((pos) => {
-      marketDataService.subscribeTicker(pos.symbol, (data) => {
-        if (!mounted) return
-        
-        const currentPrice = parseFloat(data.price)
-        setPositions((prev) =>
-          prev.map((p) => {
-            if (p.symbol === pos.symbol) {
-              const priceDiff = p.side === 'LONG' 
-                ? currentPrice - p.entryPrice 
-                : p.entryPrice - currentPrice
-              const pnl = priceDiff * p.size * p.leverage
-              const pnlPercent = (priceDiff / p.entryPrice) * 100 * p.leverage
-              
-              return {
-                ...p,
-                currentPrice,
-                pnl,
-                pnlPercent,
-              }
-            }
-            return p
-          })
-        )
-      })
-    })
-
-    // Simulate portfolio value changes
-    const interval = setInterval(() => {
-      if (!mounted) return
-      setTotalValue((prev) => prev + (Math.random() - 0.48) * 1000)
-      setTotalPnL((prev) => prev + (Math.random() - 0.48) * 100)
-      setDailyPnL((prev) => prev + (Math.random() - 0.48) * 50)
-    }, 2000)
-
-    return () => {
-      mounted = false
-      clearInterval(interval)
-      positions.forEach((pos) => marketDataService.unsubscribe(pos.symbol))
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('polymarket_config')
+      if (savedConfig) {
+        setIsConfigured(true)
+        polymarketService.fetchBalance().then(setBalance)
+        polymarketService.fetchPositions().then(setPolyPositions)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (!isConfigured) return
+
+    const interval = setInterval(() => {
+      polymarketService.fetchBalance().then(setBalance)
+      polymarketService.fetchPositions().then(setPolyPositions)
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [isConfigured])
+
+  // Aggregate total value
+  useEffect(() => {
+    setTotalValue(balance.usdc + (balance.eth * 3500)) // ETH price estimate
+    setTotalPnL(polyPositions.reduce((acc, p) => acc + p.pnl, 0))
+  }, [balance, polyPositions])
 
   const totalPositionPnL = positions.reduce((sum, pos) => sum + pos.pnl, 0)
 
