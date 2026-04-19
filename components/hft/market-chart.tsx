@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { createChart, ColorType } from 'lightweight-charts'
+import { createChart, ColorType, AreaSeries, type Time } from 'lightweight-charts'
 
 interface MarketChartProps {
   data: { time: number; value: number }[]
@@ -33,14 +33,14 @@ export function MarketChart({ data, color = '#ff7700' }: MarketChartProps) {
       },
     })
 
-    const areaSeries = chart.addAreaSeries({
+    const areaSeries = chart.addSeries(AreaSeries, {
       lineColor: color,
       topColor: color,
       bottomColor: 'rgba(255, 119, 0, 0)',
       lineWidth: 2,
     })
 
-    areaSeries.setData(data)
+    areaSeries.setData(data.map(d => ({ ...d, time: d.time as Time })))
     chart.timeScale().fitContent()
 
     const handleResize = () => {

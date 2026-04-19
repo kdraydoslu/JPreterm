@@ -51,7 +51,7 @@ export function ExecutionLog() {
     const now = new Date(trade.time)
     const t = `${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}`
     const asset = trade.symbol.replace('USDT', '')
-    const side = trade.isBuyerMaker ? 'SELL' : 'BUY'
+    const side: 'BUY' | 'SELL' = trade.isBuyerMaker ? 'SELL' : 'BUY'
     const price = parseFloat(trade.price).toFixed(2)
     const size = parseFloat(trade.quantity).toFixed(4)
     const lat = (Math.random() * 900 + 100).toFixed(0) // Simulated latency
