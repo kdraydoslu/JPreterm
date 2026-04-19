@@ -28,6 +28,7 @@ export interface TickerData {
 class MarketDataService {
   private wsConnections: Map<string, WebSocket> = new Map()
   private orderBookCallbacks: Map<string, (data: OrderBookData) => void> = new Map()
+  private tradeCallbacks: Map<string, (data: TradeData) => void> = new Map()
   private tickerCallbacks: Map<string, (data: TickerData) => void> = new Map()
   private allTickersCallback: ((data: TickerData[]) => void) | null = null
   private finnhubToken = 'd7ije29r01qn2qau9hk0d7ije29r01qn2qau9hkg'
