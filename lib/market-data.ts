@@ -30,6 +30,58 @@ class MarketDataService {
   private orderBookCallbacks: Map<string, (data: OrderBookData) => void> = new Map()
   private tradeCallbacks: Map<string, (data: TradeData) => void> = new Map()
   private tickerCallbacks: Map<string, (data: TickerData) => void> = new Map()
+  private allTickersCallback: ((data: TickerData[]) => void) | null = null
+
+  // Subscribe to all 24hr tickers at once
+  subscribeAllTickers(callback: (data: TickerData[]) => void) {
+    const streamName = '!ticker@arr'
+    this.allTickersCallback = callback
+    
+    if (!this.wsConnections.has(streamName)) {
+      const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${streamName}`)
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (Array.isArray(data)) {
+            const tickers = data.map((t: any) => ({
+              symbol: t.s,
+              price: t.c,
+              priceChange: t.p,
+              priceChangePercent: t.P,
+              volume: t.v,
+              high: t.h,
+              low: t.l,
+            }))
+            if (this.allTickersCallback) this.allTickersCallback(tickers)
+          }
+        } catch (error) {
+          console.error(`Error parsing bulk ticker data:`, error)
+        }
+      }
+      
+      ws.onclose = () => this.wsConnections.delete(streamName)
+      this.wsConnections.set(streamName, ws)
+    }
+  }
+
+  // Fetch World Bank Macro Indicators
+  async fetchWorldBankIndicator(indicator: string, country: string = 'WLD') {
+    try {
+      const response = await fetch(`https://api.worldbank.org/v2/country/${country}/indicator/${indicator}?format=json&per_page=5`)
+      const data = await response.json()
+      if (data && data[1]) {
+        return data[1].filter((d: any) => d.value !== null).map((d: any) => ({
+           date: d.date,
+           value: d.value
+        }))
+      }
+      return []
+    } catch (error) {
+      console.error(`Error fetching World Bank data for ${indicator}:`, error)
+      return []
+    }
+  }
 
   // Subscribe to order book depth updates
   subscribeOrderBook(symbol: string, callback: (data: OrderBookData) => void) {
