@@ -63,17 +63,17 @@ function IndicatorRow({ label, value, weight }: { label: string; value: number; 
   const isPos = value > 0
   const isNeg = value < 0
   return (
-    <div className="bg-[rgba(0,0,0,0.5)] border border-[rgba(0,255,85,0.1)] p-2 rounded-lg flex items-center justify-between">
+    <div className="bg-[rgba(0,0,0,0.5)] border border-[rgba(0,255,85,0.1)] p-3 rounded-lg flex items-center justify-between">
       <div className="flex flex-col">
-        <span className="text-[7px] text-[rgba(255,255,255,0.4)] uppercase font-bold mb-1">{label}</span>
+        <span className="text-[8px] text-[rgba(255,255,255,0.4)] uppercase font-bold mb-1 tracking-widest">{label}</span>
         <div className="flex items-center gap-1.5">
-          <div className="h-1 w-6 rounded-full bg-[rgba(255,255,255,0.1)] overflow-hidden">
+          <div className="h-1 w-8 rounded-full bg-[rgba(255,255,255,0.1)] overflow-hidden">
             <div className={`h-full ${isPos ? 'bg-[#00FF55]' : isNeg ? 'bg-[#FF3333]' : 'bg-[rgba(255,255,255,0.2)]'}`} style={{ width: value !== 0 ? '100%' : '0%' }} />
           </div>
-          <span className="text-[8px] font-mono text-[rgba(255,255,255,0.3)]">W:{weight}</span>
+          <span className="text-[9px] font-mono text-[rgba(255,255,255,0.3)]">W:{weight}</span>
         </div>
       </div>
-      <div className={`font-mono text-[10px] font-bold ${isPos ? 'text-[#00FF55]' : isNeg ? 'text-[#FF3333]' : 'text-[rgba(255,255,255,0.2)]'}`}>
+      <div className={`font-mono text-xs font-bold ${isPos ? 'text-[#00FF55]' : isNeg ? 'text-[#FF3333]' : 'text-[rgba(255,255,255,0.2)]'}`}>
         {isPos ? '+' : ''}{value !== 0 ? value.toFixed(1) : 'NÖTR'}
       </div>
     </div>
@@ -116,7 +116,6 @@ function SmartWalletActivity() {
     "Institutional flow detected in 'BTC' markets",
     "Whale 0x71a... entered large YES position"
   ])
-  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const whales = ["0x71a...", "0x22b...", "0x99f...", "0x44d...", "0x11e...", "0xabc...", "0xdef..."]
@@ -141,7 +140,7 @@ function SmartWalletActivity() {
       <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#00ff9d] mb-2 border-b border-[rgba(0,255,157,0.2)] pb-1">
         SMART WALLET ACTIVITY
       </h3>
-      <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
         {activity.map((msg, i) => (
           <div key={i} className={`text-[8px] font-mono border-l pl-2 py-1 transition-all duration-500 ${i === 0 ? 'text-white border-white bg-white/5 scale-105' : 'text-[rgba(0,255,157,0.8)] border-[#00ff9d]'}`}>
              {msg}
@@ -337,7 +336,7 @@ export function PredictionMarkets() {
       </div>
 
       {/* Main 3-Column Layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
+      <div className="flex-1 flex gap-6 p-4 overflow-hidden">
         
         {/* LEFT COLUMN: Feed & Activity */}
         <div className="w-[320px] flex flex-col gap-4 shrink-0">
@@ -346,121 +345,140 @@ export function PredictionMarkets() {
         </div>
 
         {/* CENTER COLUMN: Central Markets & Sniper */}
-        <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex-1 flex flex-col gap-6 overflow-y-auto pr-2 custom-scrollbar">
           
-          {/* Sniper Command Center */}
-          <div className="bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.25)] rounded-lg p-5 grid grid-cols-[1fr_240px] gap-8 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff7700]/5 blur-3xl rounded-full" />
+          {/* Sniper Command Center - TALLER VERSION */}
+          <div className="bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.25)] rounded-lg p-6 grid grid-cols-[1fr_260px] gap-10 shadow-2xl relative overflow-hidden group min-h-[400px]">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#ff7700]/5 blur-[100px] rounded-full" />
             
-            <div className="space-y-5 relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-5 w-1 bg-[#00ff9d]" />
-                  <h2 className="font-[var(--font-orbitron)] text-base font-black text-[#00ff9d] tracking-widest">ULTRA SNIPE ENGINE</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                   <span className="text-[8px] text-[rgba(0,255,157,0.5)] font-mono">LATENCY: 8ms</span>
-                   <div className="bg-[#00ff9d] text-black text-[9px] font-black px-2 py-0.5 rounded animate-pulse shadow-[0_0_10px_rgba(0,255,157,0.3)]">LIVE SCAN</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Risk Factor</span>
-                  <div className="flex gap-1.5 p-1 bg-black/40 rounded border border-white/5">
-                    {(['SAFE', 'AGGRESSIVE', 'DEGEN'] as Mode[]).map((m) => (
-                      <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 rounded text-[9px] font-black transition-all ${mode === m ? 'bg-[#ff7700] text-black shadow-[0_0_15px_rgba(255,119,0,0.3)]' : 'text-[rgba(255,119,0,0.4)] hover:text-white hover:bg-white/5'}`}>
-                        {m}
-                      </button>
-                    ))}
+            <div className="space-y-6 relative z-10 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-6 w-1 bg-[#00ff9d]" />
+                    <h2 className="font-[var(--font-orbitron)] text-lg font-black text-[#00ff9d] tracking-[0.2em]">ULTRA SNIPE ENGINE</h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                     <span className="text-[9px] text-[rgba(0,255,157,0.5)] font-mono">CORE_LATENCY: 8ms</span>
+                     <div className="bg-[#00ff9d] text-black text-[10px] font-black px-2.5 py-1 rounded animate-pulse shadow-[0_0_15px_rgba(0,255,157,0.4)]">ACTIVE_RADAR</div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Target Asset</span>
-                  <div className="flex gap-1.5 p-1 bg-black/40 rounded border border-white/5">
-                    {['BTC', 'ETH', 'SOL'].map((a) => (
-                      <button key={a} onClick={() => setSelectedAsset(a as Asset)} className={`flex-1 py-2 rounded text-[9px] font-black transition-all ${selectedAsset === a ? 'bg-[#00ff9d] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-[rgba(0,255,157,0.4)] hover:text-white hover:bg-white/5'}`}>
-                        {a}
-                      </button>
-                    ))}
+                
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest ml-1">Risk Architecture</span>
+                    <div className="flex gap-1.5 p-1.5 bg-black/60 rounded-xl border border-white/5 h-12">
+                      {(['SAFE', 'AGGRESSIVE', 'DEGEN'] as Mode[]).map((m) => (
+                        <button key={m} onClick={() => setMode(m)} className={`flex-1 rounded-lg text-[10px] font-black transition-all ${mode === m ? 'bg-[#ff7700] text-black shadow-[0_0_20px_rgba(255,119,0,0.4)]' : 'text-[rgba(255,119,0,0.4)] hover:text-white hover:bg-white/5'}`}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest ml-1">Primary Asset</span>
+                    <div className="flex gap-1.5 p-1.5 bg-black/60 rounded-xl border border-white/5 h-12">
+                      {['BTC', 'ETH', 'SOL'].map((a) => (
+                        <button key={a} onClick={() => setSelectedAsset(a as Asset)} className={`flex-1 rounded-lg text-[10px] font-black transition-all ${selectedAsset === a ? 'bg-[#00ff9d] text-black shadow-[0_0_20px_rgba(0,255,157,0.4)]' : 'text-[rgba(0,255,157,0.4)] hover:text-white hover:bg-white/5'}`}>
+                          {a}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-gradient-to-br from-black/60 to-black/30 p-4 rounded-lg border border-[rgba(255,119,0,0.15)] group-hover:border-[rgba(0,255,157,0.3)] transition-colors">
-                   <div className="text-[9px] text-[rgba(255,119,0,0.6)] font-bold mb-2 tracking-widest uppercase">Signal Score</div>
-                   <div className={`text-3xl font-black font-mono tracking-tighter ${currentSignal.direction === 'UP' ? 'text-[#00ff9d] [text-shadow:0_0_20px_rgba(0,255,157,0.4)]' : 'text-[#ff3333] [text-shadow:0_0_20px_rgba(255,51,51,0.4)]'}`}>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="bg-gradient-to-br from-black/80 to-black/40 p-6 rounded-2xl border border-[rgba(255,119,0,0.2)] group-hover:border-[rgba(0,255,157,0.4)] transition-all transform hover:scale-[1.02]">
+                   <div className="flex justify-between items-center mb-3">
+                      <div className="text-[10px] text-[rgba(255,119,0,0.6)] font-bold tracking-widest uppercase">Signal Score</div>
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#00ff9d] shadow-[0_0_8px_#00ff9d]" />
+                   </div>
+                   <div className={`text-4xl font-black font-mono tracking-tighter ${currentSignal.direction === 'UP' ? 'text-[#00ff9d] [text-shadow:0_0_30px_rgba(0,255,157,0.5)]' : 'text-[#ff3333] [text-shadow:0_0_30px_rgba(255,51,51,0.5)]'}`}>
                       {currentSignal.direction} {((currentSignal.confidence || 0) * 100).toFixed(0)}%
                    </div>
+                   <div className="mt-2 text-[9px] text-white/20 font-mono italic">Reliability: High Confidence</div>
                 </div>
-                <div className="bg-gradient-to-br from-black/60 to-black/30 p-4 rounded-lg border border-[rgba(255,119,0,0.15)] group-hover:border-[rgba(255,255,255,0.3)] transition-colors">
-                   <div className="text-[9px] text-[rgba(255,119,0,0.6)] font-bold mb-2 tracking-widest uppercase">Target Window</div>
-                   <div className={`text-3xl font-black font-mono tracking-tighter ${window5m.timeLeft < 30 ? 'text-[#ff3333] animate-pulse' : 'text-white'}`}>
+                <div className="bg-gradient-to-br from-black/80 to-black/40 p-6 rounded-2xl border border-[rgba(255,119,0,0.2)] group-hover:border-[rgba(255,255,255,0.4)] transition-all transform hover:scale-[1.02]">
+                   <div className="flex justify-between items-center mb-3">
+                      <div className="text-[10px] text-[rgba(255,119,0,0.6)] font-bold tracking-widest uppercase">Target Window</div>
+                      <div className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_white]" />
+                   </div>
+                   <div className={`text-4xl font-black font-mono tracking-tighter ${window5m.timeLeft < 30 ? 'text-[#ff3333] animate-pulse' : 'text-white'}`}>
                       {formatTimer(window5m.timeLeft)}
                    </div>
+                   <div className="mt-2 text-[9px] text-white/20 font-mono italic text-right">Window: 5-Min Interval</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-[rgba(255,119,0,0.03)] border-l border-[rgba(255,119,0,0.2)] pl-6 flex flex-col justify-center gap-3 relative z-10">
+            <div className="bg-[rgba(255,119,0,0.04)] border-l-2 border-[rgba(255,119,0,0.3)] pl-8 flex flex-col justify-center gap-4 relative z-10 py-4">
               <IndicatorRow label="WINDOW DELTA" value={currentSignal.indicators.delta} weight="7.0" />
               <IndicatorRow label="MOMENTUM" value={currentSignal.indicators.momentum} weight="2.0" />
               <IndicatorRow label="TICK TREND" value={currentSignal.indicators.tick} weight="1.5" />
+              <div className="mt-4 pt-4 border-t border-white/5">
+                 <div className="text-[8px] text-white/30 uppercase font-black mb-1">Engine Load</div>
+                 <div className="h-1 w-full bg-white/5 rounded-full">
+                    <div className="h-full bg-[#ff7700] rounded-full" style={{ width: '42%' }} />
+                 </div>
+              </div>
             </div>
           </div>
 
-          {/* Markets List */}
-          <div className="flex-1 space-y-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex gap-4">
+          {/* Markets List Section - MOVED FURTHER DOWN with gap-6 */}
+          <div className="flex-1 space-y-8 mt-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex gap-6">
                 {categories.map((cat) => (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2 ${selectedCategory === cat ? 'text-[#ff7700] border-[#ff7700]' : 'text-white/20 border-transparent hover:text-white/40'}`}>
+                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`text-[11px] font-black uppercase tracking-[0.25em] transition-all pb-2 border-b-2 ${selectedCategory === cat ? 'text-[#ff7700] border-[#ff7700]' : 'text-white/20 border-transparent hover:text-white/40'}`}>
                     {cat}
                   </button>
                 ))}
               </div>
-              <span className="text-[10px] font-mono text-white/30">{filteredMarkets.length > 0 ? filteredMarkets.length : 8} MARKETS MONITORED</span>
+              <div className="flex items-center gap-3">
+                 <div className="h-1.5 w-1.5 bg-[#ff7700] rounded-full animate-ping" />
+                 <span className="text-[10px] font-mono text-white/30 tracking-widest uppercase">{filteredMarkets.length > 0 ? filteredMarkets.length : 8} MARKETS SCOPED</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               {filteredMarkets.length > 0 ? (
                 filteredMarkets.slice(0, 10).map((market) => (
-                  <div key={market.id} className="bg-black/40 border border-white/5 p-4 rounded-xl hover:bg-black/60 hover:border-[#ff7700]/30 transition-all group overflow-hidden relative">
-                    <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/5 blur-xl rounded-full" />
-                    <div className="text-[11px] text-white font-bold mb-3 h-10 line-clamp-2 leading-relaxed group-hover:text-[#ff7700] transition-colors">{market.question}</div>
-                    <div className="flex gap-4 mb-4">
-                      <div className="flex-1 flex flex-col space-y-1">
-                        <div className="flex justify-between text-[9px] font-bold">
+                  <div key={market.id} className="bg-black/40 border border-white/5 p-5 rounded-2xl hover:bg-black/60 hover:border-[#ff7700]/40 transition-all group overflow-hidden relative shadow-lg">
+                    <div className="absolute -right-6 -top-6 w-16 h-16 bg-white/5 blur-2xl rounded-full" />
+                    <div className="text-[12px] text-white font-bold mb-4 h-11 line-clamp-2 leading-relaxed group-hover:text-[#ff7700] transition-colors">{market.question}</div>
+                    <div className="flex gap-6 mb-5">
+                      <div className="flex-1 flex flex-col space-y-2">
+                        <div className="flex justify-between text-[10px] font-black tracking-wider">
                           <span className="text-[#00ff9d]">YES</span>
-                          <span className="text-white/80">{market.yes.toFixed(0)}%</span>
+                          <span className="text-white">{market.yes.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#00ff9d] shadow-[0_0_10px_rgba(0,255,157,0.5)] transition-all duration-1000" style={{ width: `${market.yes}%` }} />
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#00ff9d] shadow-[0_0_15px_rgba(0,255,157,0.6)] transition-all duration-1000" style={{ width: `${market.yes}%` }} />
                         </div>
                       </div>
-                      <div className="flex-1 flex flex-col space-y-1">
-                        <div className="flex justify-between text-[9px] font-bold">
+                      <div className="flex-1 flex flex-col space-y-2">
+                        <div className="flex justify-between text-[10px] font-black tracking-wider">
                           <span className="text-[#ff3333]">NO</span>
-                          <span className="text-white/80">{market.no.toFixed(0)}%</span>
+                          <span className="text-white">{market.no.toFixed(0)}%</span>
                         </div>
-                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-[#ff3333] shadow-[0_0_10px_rgba(255,51,51,0.5)] transition-all duration-1000" style={{ width: `${market.no}%` }} />
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#ff3333] shadow-[0_0_15px_rgba(255,51,51,0.6)] transition-all duration-1000" style={{ width: `${market.no}%` }} />
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handlePlaceTrade(market.id, 'YES', 10)} className="flex-1 py-2 rounded bg-[#00ff9d]/5 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/20 text-[10px] font-black transition-all">SNIPE YES</button>
-                      <button onClick={() => handlePlaceTrade(market.id, 'NO', 10)} className="flex-1 py-2 rounded bg-[#ff3333]/5 hover:bg-[#ff3333]/20 text-[#ff3333] border border-[#ff3333]/20 text-[10px] font-black transition-all">SNIPE NO</button>
+                    <div className="flex gap-3">
+                      <button onClick={() => handlePlaceTrade(market.id, 'YES', 10)} className="flex-1 py-2.5 rounded-xl bg-[#00ff9d]/5 hover:bg-[#00ff9d]/20 text-[#00ff9d] border-2 border-[#00ff9d]/20 text-[11px] font-black transition-all uppercase tracking-widest active:scale-95">Snipe Yes</button>
+                      <button onClick={() => handlePlaceTrade(market.id, 'NO', 10)} className="flex-1 py-2.5 rounded-xl bg-[#ff3333]/5 hover:bg-[#ff3333]/20 text-[#ff3333] border-2 border-[#ff3333]/20 text-[11px] font-black transition-all uppercase tracking-widest active:scale-95">Snipe No</button>
                     </div>
                   </div>
                 ))
               ) : (
                 [1,2,3,4,5,6].map(i => (
-                  <div key={i} className="bg-black/40 border border-white/5 p-4 rounded-xl animate-pulse flex flex-col gap-4">
-                    <div className="h-4 bg-white/5 rounded w-3/4" />
-                    <div className="h-2 bg-white/5 rounded" />
-                    <div className="h-8 bg-white/5 rounded" />
+                  <div key={i} className="bg-black/40 border border-white/5 p-5 rounded-2xl animate-pulse flex flex-col gap-6">
+                    <div className="h-5 bg-white/5 rounded w-3/4" />
+                    <div className="h-3 bg-white/5 rounded" />
+                    <div className="h-10 bg-white/5 rounded-xl" />
                   </div>
                 ))
               )}
