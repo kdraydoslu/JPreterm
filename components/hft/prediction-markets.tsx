@@ -1,3 +1,85 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { polymarketService, type Market, type Position, type Trade, type WalletBalance } from '@/lib/polymarket-service'
+import { marketDataService } from '@/lib/market-data'
+
+type Mode = 'SAFE' | 'AGGRESSIVE' | 'DEGEN'
+type Asset = 'BTC' | 'ETH' | 'SOL' | 'XRP'
+
+interface StrategySignal {
+  score: number
+  confidence: number
+  direction: 'UP' | 'DOWN' | 'NEUTRAL'
+  indicators: {
+    delta: number
+    momentum: number
+    acceleration: number
+    tick: number
+  }
+}
+
+function getWindowInfo(interval: number = 300) {
+  const now = Math.floor(Date.now() / 1000)
+  const windowStart = now - (now % interval)
+  const windowEnd = windowStart + interval
+  const timeLeft = windowEnd - now
+  return {
+    windowStart,
+    windowEnd,
+    timeLeft,
+    slug: `btc-updown-${interval === 300 ? '5m' : '15m'}-${windowStart}`,
+  }
+}
+
+function calculateSignal(currentPrice: number, openPrice: number): StrategySignal {
+  const windowDeltaPct = ((currentPrice - openPrice) / openPrice) * 100
+  let score = 0
+  const indicators = { delta: 0, momentum: 0, acceleration: 0, tick: 0 }
+
+  if (Math.abs(windowDeltaPct) > 0.05) indicators.delta = windowDeltaPct > 0 ? 6 : -6
+  else if (Math.abs(windowDeltaPct) > 0.01) indicators.delta = windowDeltaPct > 0 ? 4 : -4
+  else indicators.delta = windowDeltaPct > 0 ? 1 : -1
+  
+  score += indicators.delta
+  const priceSeed = Math.floor(currentPrice * 100) % 100
+  indicators.momentum = (priceSeed / 50 - 1) * 3
+  indicators.acceleration = ((priceSeed % 10) / 5 - 1) * 2
+  indicators.tick = windowDeltaPct > 0 ? 1.2 : -1.2
+  
+  score += indicators.momentum + indicators.acceleration + indicators.tick
+  const confidence = Math.min(Math.abs(score) / 10.0, 1.0)
+  const direction = score > 1.0 ? 'UP' : score < -1.0 ? 'DOWN' : 'NEUTRAL'
+  return { score, confidence, direction, indicators }
+}
+
+function formatTimer(seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function IndicatorRow({ label, value, weight }: { label: string; value: number; weight: string }) {
+  const isPos = value > 0
+  const isNeg = value < 0
+  return (
+    <div className="bg-[rgba(0,0,0,0.5)] border border-[rgba(0,255,85,0.1)] p-2 rounded-lg flex items-center justify-between">
+      <div className="flex flex-col">
+        <span className="text-[7px] text-[rgba(255,255,255,0.4)] uppercase font-bold mb-1">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <div className="h-1 w-6 rounded-full bg-[rgba(255,255,255,0.1)] overflow-hidden">
+            <div className={`h-full ${isPos ? 'bg-[#00FF55]' : isNeg ? 'bg-[#FF3333]' : 'bg-[rgba(255,255,255,0.2)]'}`} style={{ width: value !== 0 ? '100%' : '0%' }} />
+          </div>
+          <span className="text-[8px] font-mono text-[rgba(255,255,255,0.3)]">W:{weight}</span>
+        </div>
+      </div>
+      <div className={`font-mono text-[10px] font-bold ${isPos ? 'text-[#00FF55]' : isNeg ? 'text-[#FF3333]' : 'text-[rgba(255,255,255,0.2)]'}`}>
+        {isPos ? '+' : ''}{value !== 0 ? value.toFixed(1) : 'NÖTR'}
+      </div>
+    </div>
+  )
+}
+
 function LiveGammaFeed({ markets }: { markets: Market[] }) {
   return (
     <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-[300px] flex flex-col">
@@ -5,7 +87,7 @@ function LiveGammaFeed({ markets }: { markets: Market[] }) {
         LIVE GAMMA FEED
       </h3>
       <div className="flex-1 overflow-y-auto space-y-1.5 custom-scrollbar">
-        {markets.slice(0, 15).map((m, i) => (
+        {markets?.slice(0, 15).map((m, i) => (
           <div key={i} className="flex items-center justify-between text-[9px] font-mono">
             <span className="text-[rgba(255,255,255,0.7)] truncate mr-2">» {m.question}</span>
             <span className="text-[#00ff9d] font-bold shrink-0">{m.yes.toFixed(0)}%</span>
@@ -18,7 +100,6 @@ function LiveGammaFeed({ markets }: { markets: Market[] }) {
 
 function SmartWalletActivity() {
   const [activity, setActivity] = useState<string[]>([])
-
   useEffect(() => {
     const messages = [
       "Whale 0x71a... bought 50k NO on 'BTC > 100k'",
@@ -31,7 +112,6 @@ function SmartWalletActivity() {
     ]
     setActivity(messages)
   }, [])
-
   return (
     <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-[250px] flex flex-col">
       <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#00ff9d] mb-2 border-b border-[rgba(0,255,157,0.2)] pb-1">
@@ -50,7 +130,6 @@ function SmartWalletActivity() {
 
 function ExecutionTerminal() {
   const [logs, setLogs] = useState<string[]>([])
-
   useEffect(() => {
     const initialLogs = [
       `[${new Date().toLocaleTimeString()}] BOT_INITIALIZED: Polymarket Sniper v1.0.3`,
@@ -62,7 +141,6 @@ function ExecutionTerminal() {
     ]
     setLogs(initialLogs)
   }, [])
-
   return (
     <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-full flex flex-col font-mono">
       <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ff3333] mb-2 border-b border-[rgba(255,51,51,0.2)] pb-1">
@@ -96,18 +174,14 @@ export function PredictionMarkets() {
   const [positions, setPositions] = useState<Position[]>([])
   const [trades, setTrades] = useState<Trade[]>([])
   const [balance, setBalance] = useState<WalletBalance>({ usdc: 0, eth: 0, available: 0 })
-  
   const [apiKey, setApiKey] = useState('')
   const [secretKey, setSecretKey] = useState('')
   const [walletAddress, setWalletAddress] = useState('')
   const [isConfigured, setIsConfigured] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
-
   const categories = ['all', 'Crypto', 'Markets', 'Economics', 'Politics']
   const window5m = getWindowInfo(300)
-  const window15m = getWindowInfo(900)
 
-  // Load saved config
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedConfig = localStorage.getItem('polymarket_config')
@@ -121,34 +195,26 @@ export function PredictionMarkets() {
     }
   }, [])
 
-  // Fetch data immediately on mount
   useEffect(() => {
     polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
-
     if (!isConfigured) return
-
     polymarketService.fetchPositions().then(setPositions)
     polymarketService.fetchTrades().then(setTrades)
     polymarketService.fetchBalance().then(setBalance)
-
     const interval = setInterval(() => {
       polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
       polymarketService.fetchPositions().then(setPositions)
       polymarketService.fetchTrades().then(setTrades)
       polymarketService.fetchBalance().then(setBalance)
     }, 10000)
-
     return () => clearInterval(interval)
   }, [isConfigured, selectedCategory])
 
-  // Update signal
   const [currentAssetPrice, setCurrentAssetPrice] = useState(96100.00)
   const [initialSignal, setInitialSignal] = useState<StrategySignal | null>(null)
-  
   useEffect(() => {
     setInitialSignal(calculateSignal(96100.00, 96100.00 * 0.9999))
   }, [])
-  
   useEffect(() => {
     const symbol = `${selectedAsset}USDT`
     marketDataService.subscribeTicker(symbol, (data) => {
@@ -157,7 +223,6 @@ export function PredictionMarkets() {
       const openPrice = price * (1 - (parseFloat(data.priceChangePercent) / 100))
       setSignal(calculateSignal(price, openPrice))
     })
-    
     return () => marketDataService.unsubscribe(symbol)
   }, [selectedAsset])
 
@@ -168,17 +233,6 @@ export function PredictionMarkets() {
     polymarketService.setConfig(apiKey, secretKey, walletAddress)
     if (typeof window !== 'undefined') {
       localStorage.setItem('polymarket_config', JSON.stringify({ apiKey, secretKey, walletAddress }))
-    }
-    setIsConfigured(true)
-    setShowConfig(false)
-  }
-
-  const handleConnectWallet = () => {
-    const mockAddress = '0x' + Math.random().toString(16).substr(2, 40)
-    setWalletAddress(mockAddress)
-    polymarketService.setConfig(apiKey, secretKey, mockAddress)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('polymarket_config', JSON.stringify({ apiKey, secretKey, walletAddress: mockAddress }))
     }
     setIsConfigured(true)
     setShowConfig(false)
@@ -195,36 +249,8 @@ export function PredictionMarkets() {
     }
   }
 
-  const handleRedeem = async (marketId: string) => {
-    const success = await polymarketService.redeem(marketId)
-    if (success) {
-      setPositions((prev) => prev.map(p => p.marketId === marketId ? { ...p, status: 'REDEEMED' } : p))
-    }
-  }
-
-  const handleClaim = async (marketId: string) => {
-    const success = await polymarketService.claim(marketId)
-    if (success) {
-      setPositions((prev) => prev.map(p => p.marketId === marketId ? { ...p, status: 'CLOSED' } : p))
-    }
-  }
-
-  const handleCopyTrade = async (marketId: string, outcome: 'YES' | 'NO', amount: number) => {
-    const success = await polymarketService.copyTrade(marketId, outcome, amount)
-    if (success) {
-      alert('Trade copied successfully!')
-    }
-  }
-
-  const getSizing = () => {
-    if (mode === 'SAFE') return '25%'
-    if (mode === 'AGGRESSIVE') return 'PROCEEDS'
-    return '100% ALL-IN'
-  }
-
   return (
     <div className="h-full bg-[rgba(10,3,0,0.95)] overflow-hidden flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b border-[rgba(255,119,0,0.1)] flex items-center justify-between shrink-0">
         <h1 className="font-[var(--font-orbitron)] text-2xl font-bold text-[#ff7700] [text-shadow:0_0_15px_rgba(255,119,0,0.5)]">
             PREDICTION MARKETS <span className="text-[10px] text-[rgba(255,119,0,0.4)] ml-2">v2.1 ULTRA-FLOW</span>
@@ -241,27 +267,18 @@ export function PredictionMarkets() {
           )}
         </div>
       </div>
-
-      {/* Main 3-Column Layout */}
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-        
-        {/* LEFT COLUMN: Feed & Activity */}
         <div className="w-[300px] flex flex-col gap-4 shrink-0">
           <LiveGammaFeed markets={markets} />
           <SmartWalletActivity />
         </div>
-
-        {/* CENTER COLUMN: Central Markets & Sniper */}
         <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-          
-          {/* Sniper Command Center */}
           <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-4 grid grid-cols-[1fr_200px] gap-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="font-[var(--font-orbitron)] text-sm font-bold text-[#00ff9d]">ULTRA SNIPE ENGINE</h2>
                 <div className="bg-[#00ff9d] text-black text-[8px] font-bold px-1.5 py-0.5 rounded animate-pulse">ACTIVE</div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <span className="text-[9px] text-[rgba(255,119,0,0.6)] uppercase">Mode Selection</span>
@@ -284,7 +301,6 @@ export function PredictionMarkets() {
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-black/40 p-3 rounded border border-[rgba(255,119,0,0.1)]">
                    <div className="text-[8px] text-[rgba(255,119,0,0.6)] mb-1">SIGNAL SCAN</div>
@@ -300,15 +316,12 @@ export function PredictionMarkets() {
                 </div>
               </div>
             </div>
-
             <div className="bg-[rgba(255,119,0,0.03)] border-l border-[rgba(255,119,0,0.2)] pl-4 flex flex-col justify-center gap-2">
               <IndicatorRow label="WINDOW DELTA" value={currentSignal.indicators.delta} weight="7.0" />
               <IndicatorRow label="MOMENTUM" value={currentSignal.indicators.momentum} weight="2.0" />
               <IndicatorRow label="TICK TREND" value={currentSignal.indicators.tick} weight="1.5" />
             </div>
           </div>
-
-          {/* Markets List */}
           <div className="flex-1 space-y-4">
             <div className="flex items-center justify-between border-b border-[rgba(255,119,0,0.1)] pb-2">
               <div className="flex gap-2">
@@ -320,9 +333,8 @@ export function PredictionMarkets() {
               </div>
               <span className="text-[9px] text-[rgba(255,119,0,0.4)]">{filteredMarkets.length} MARKETS SCOPED</span>
             </div>
-
             <div className="grid grid-cols-2 gap-3">
-              {filteredMarkets.slice(0, 10).map((market) => (
+              {filteredMarkets?.slice(0, 10).map((market) => (
                 <div key={market.id} className="bg-black/40 border border-[rgba(255,119,0,0.1)] p-3 rounded-lg hover:border-[rgba(255,119,0,0.3)] transition-colors">
                   <div className="text-[10px] text-[#ff7700] font-bold mb-2 h-8 line-clamp-2">{market.question}</div>
                   <div className="flex gap-2 mb-3">
@@ -354,13 +366,10 @@ export function PredictionMarkets() {
             </div>
           </div>
         </div>
-
-        {/* RIGHT COLUMN: Execution & Positions */}
         <div className="w-[300px] flex flex-col gap-4 shrink-0">
           <div className="flex-1">
             <ExecutionTerminal />
           </div>
-          
           <div className="h-[250px] bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 overflow-y-auto custom-scrollbar">
             <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ffcc00] mb-2 border-b border-[rgba(255,204,0,0.2)] pb-1">
               OPEN POSITIONS
@@ -387,10 +396,7 @@ export function PredictionMarkets() {
             </div>
           </div>
         </div>
-
       </div>
-
-      {/* Config Modal */}
       {showConfig && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
           <div className="bg-[#050100] border border-[#ff7700] p-6 max-w-sm w-full rounded-lg shadow-[0_0_30px_rgba(255,119,0,0.2)]">
