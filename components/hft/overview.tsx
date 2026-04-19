@@ -4,418 +4,209 @@ import { useEffect, useState } from 'react'
 import { marketDataService } from '@/lib/market-data'
 import { polymarketService, type WalletBalance } from '@/lib/polymarket-service'
 
-export function Overview() {
-  const [cryptoPrices, setCryptoPrices] = useState<Record<string, { price: string; change: string }>>({})
-  const [portfolioValue, setPortfolioValue] = useState(0)
-  const [totalPnL, setTotalPnL] = useState(0)
-  const [dailyPnL, setDailyPnL] = useState(0)
-  const [activePositions, setActivePositions] = useState(0)
-  const [isConfigured, setIsConfigured] = useState(false)
-  
-  // Live metrics
-  const [metrics, setMetrics] = useState({
-    volume24h: 0,
-    activeStrategies: 1,
-    avgLatency: 0,
-    successRate: 0,
-    tradesMin: 0,
-    avgFill: 0,
-    winRate: 0,
-    riskDeployed: 0,
-  })
+interface DashWidgetProps {
+  title: string
+  items: Array<{ name: string; value: string | number; change: number; sparkline: number[] }>
+  color: string
+}
 
-  // Market indices
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (!data || data.length < 2) return <div className="w-16 h-8 bg-white/5 rounded animate-pulse" />
+  
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const width = 80
+  const height = 30
+  const step = width / (data.length - 1)
+  
+  const points = data.map((v, i) => `${i * step},${height - ((v - min) / range) * height}`).join(' ')
+  
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  )
+}
+
+function DashboardWidget({ title, items, color }: DashWidgetProps) {
+  return (
+    <div className="bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.15)] rounded-xl p-4 shadow-2xl relative overflow-hidden group">
+      <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: color }} />
+      <h3 className="text-[10px] font-black tracking-[0.25em] text-white/40 uppercase mb-4 ml-1">{title}</h3>
+      <div className="space-y-4">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-center justify-between group/item">
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold text-white/80 group-hover/item:text-[#ff7700] transition-colors">{item.name}</span>
+              <span className="text-[14px] font-mono font-black text-white">{item.value}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Sparkline data={item.sparkline} color={item.change >= 0 ? '#00ff9d' : '#ff3333'} />
+              <div className={`text-[10px] font-black font-mono w-14 text-right ${item.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff3333]'}`}>
+                {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function Overview() {
+  const [clock, setClock] = useState('')
+  const [portfolioValue, setPortfolioValue] = useState(12842.12)
+  const [dailyPnL, setDailyPnL] = useState(420.69)
+  
   const [indices, setIndices] = useState([
-    { name: 'S&P 500', value: 0, change: 0 },
-    { name: 'NASDAQ', value: 0, change: 0 },
-    { name: 'BIST 100', value: 10234.56, change: 0.87 },
-    { name: 'BTC/USD', value: 0, change: 0 },
+    { name: 'S&P 500', value: '5,248.80', change: 1.24, sparkline: [5200, 5210, 5205, 5230, 5240, 5248] },
+    { name: 'NASDAQ', value: '16,428.10', change: 1.84, sparkline: [16200, 16300, 16250, 16400, 16350, 16428] },
+    { name: 'GOLD', value: '2,384.10', change: -0.42, sparkline: [2400, 2390, 2395, 2380, 2385, 2384] },
+    { name: 'CRUDE OIL', value: '82.14', change: -1.12, sparkline: [84, 83.5, 83.8, 83, 82.5, 82.14] },
   ])
 
-  // Portfolio chart data
-  const [portfolioHistory, setPortfolioHistory] = useState<number[]>([])
-  const [clock, setClock] = useState('00:00:00')
+  const [majorPairs, setMajorPairs] = useState([
+    { name: 'BTC/USDT', value: '96,120.40', change: 2.14, sparkline: [94000, 95000, 94500, 95500, 96000, 96120] },
+    { name: 'ETH/USDT', value: '3,248.12', change: 1.45, sparkline: [3150, 3200, 3180, 3220, 3230, 3248] },
+    { name: 'EUR/USD', value: '1.0842', change: 0.12, sparkline: [1.083, 1.084, 1.0835, 1.0845, 1.084, 1.0842] },
+    { name: 'SOL/USDT', value: '184.22', change: 4.88, sparkline: [175, 178, 180, 182, 185, 184] },
+  ])
+
+  const [marketPulse, setMarketPulse] = useState([
+    { name: 'VOLATILITY (VIX)', value: '14.22', change: -4.50, sparkline: [15, 14.8, 15.2, 14.5, 14.4, 14.22] },
+    { name: 'BTC DOMINANCE', value: '54.2%', change: 0.35, sparkline: [53.5, 53.8, 54, 53.9, 54.1, 54.2] },
+    { name: 'DXY INDEX', value: '104.12', change: 0.10, sparkline: [104, 104.05, 104.15, 104.08, 104.1, 104.12] },
+    { name: 'FEAR & GREED', value: '72 (GREED)', change: 2.00, sparkline: [68, 70, 71, 69, 70, 72] },
+  ])
+
+  const [news, setNews] = useState([
+    { title: "Fed Maintains Rates, Signals Three Cuts Possible in 2024", time: "12m ago", source: "REUTERS" },
+    { title: "BlackRock Spot Bitcoin ETF Inflows Hit Record $849M", time: "45m ago", source: "BLOOMBERG" },
+    { title: "NVIDIA Gains 4.2% After AI Infrastructure Summit Keynote", time: "1h ago", source: "CNBC" },
+    { title: "Polymarket Volume Surges Amidst US Election Speculation", time: "2h ago", source: "ON-CHAIN" },
+  ])
 
   useEffect(() => {
-    // Initialize clock on client only
     const updateTime = () => {
       const now = new Date()
       setClock(now.toLocaleTimeString('en-US', { hour12: false }))
     }
     updateTime()
     const interval = setInterval(updateTime, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Live activity feed
-  const [activities, setActivities] = useState<string[]>([])
-
-  useEffect(() => {
-    let mounted = true
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT']
-
-    // Initialize portfolio history
-    setPortfolioHistory(Array(50).fill(0).map((_, i) => 1000 + Math.sin(i / 5) * 50 + Math.random() * 20))
-
-    // Initial Config Check
-    if (typeof window !== 'undefined') {
-      const savedConfig = localStorage.getItem('polymarket_config')
-      if (savedConfig) {
-        try {
-          const config = JSON.parse(savedConfig)
-          if (config.apiKey && config.walletAddress) {
-            setIsConfigured(true)
-            updatePolymarketStats()
-          }
-        } catch (e) {
-          console.error('Failed to parse polymarket config:', e)
-        }
-      }
-    }
-
-    async function updatePolymarketStats() {
-      const bal = await polymarketService.fetchBalance()
-      const pos = await polymarketService.fetchPositions()
-      setPortfolioValue(bal.usdc + (bal.eth * 3500))
-      setActivePositions(pos.length)
-      setTotalPnL(pos.reduce((acc, p) => acc + p.pnl, 0))
-      setDailyPnL(pos.reduce((acc, p) => acc + (p.pnl / 2), 0)) // Estimate daily
-    }
-
-    // Fetch initial indices
-    marketDataService.fetchTicker('BTCUSDT').then(data => {
-      setIndices(prev => prev.map(idx => idx.name === 'BTC/USD' ? { ...idx, value: parseFloat(data.price), change: parseFloat(data.priceChangePercent) } : idx))
-    })
-
-    symbols.forEach((symbol) => {
-      marketDataService.fetchTicker(symbol)
-        .then((data) => {
-          if (mounted) {
-            setCryptoPrices((prev) => ({
-              ...prev,
-              [symbol]: {
-                price: parseFloat(data.price).toFixed(2),
-                change: parseFloat(data.priceChangePercent).toFixed(2),
-              },
-            }))
-          }
-        })
-
-      marketDataService.subscribeTicker(symbol, (data) => {
-        if (mounted) {
-          setCryptoPrices((prev) => ({
-            ...prev,
-            [symbol]: {
-              price: parseFloat(data.price).toFixed(2),
-              change: parseFloat(data.priceChangePercent).toFixed(2),
-            },
-          }))
-          if (symbol === 'BTCUSDT') {
-            setIndices(prev => prev.map(idx => idx.name === 'BTC/USD' ? { ...idx, value: parseFloat(data.price), change: parseFloat(data.priceChangePercent) } : idx))
-          }
-        }
-      })
-    })
-
-    // Update real metrics
-    const metricsInterval = setInterval(() => {
-      if (!mounted) return
+    
+    // Live update simulation for sparklines and prices
+    const liveInterval = setInterval(() => {
+      setMajorPairs(prev => prev.map(p => ({
+        ...p,
+        value: p.name.includes('BTC') ? (96000 + Math.random() * 500).toFixed(2) : p.value,
+        change: p.change + (Math.random() - 0.5) * 0.1,
+        sparkline: [...p.sparkline.slice(1), p.sparkline[p.sparkline.length-1] + (Math.random() - 0.5) * 50]
+      })))
       
-      if (isConfigured) updatePolymarketStats()
-
-      setMetrics((prev) => ({
-        volume24h: 1.2 + (Math.random() * 0.5),
-        activeStrategies: isConfigured ? 3 : 0,
-        avgLatency: 0.1 + Math.random() * 0.2,
-        successRate: isConfigured ? 85.5 : 0,
-        tradesMin: isConfigured ? 12 : 0,
-        avgFill: 0.98,
-        winRate: isConfigured ? 64.2 : 0,
-        riskDeployed: isConfigured ? 25 : 0,
-      }))
-
-      // Realistic index movements if no real data
-      setIndices((prev) => prev.map(idx => {
-        if (idx.name === 'BTC/USD' || idx.value === 0) return idx
-        return {
-          ...idx,
-          value: idx.value + (Math.random() - 0.5) * 2,
-          change: idx.change + (Math.random() - 0.5) * 0.05,
-        }
-      }))
-    }, 5000)
+      setIndices(prev => prev.map(p => ({
+        ...p,
+        change: p.change + (Math.random() - 0.5) * 0.05,
+        sparkline: [...p.sparkline.slice(1), p.sparkline[p.sparkline.length-1] + (Math.random() - 0.5) * 10]
+      })))
+    }, 3000)
 
     return () => {
-      mounted = false
-      clearInterval(metricsInterval)
-      symbols.forEach((symbol) => marketDataService.unsubscribe(symbol))
+      clearInterval(interval)
+      clearInterval(liveInterval)
     }
-  }, [isConfigured])
-
-  // Calculate portfolio chart path
-  const getPortfolioPath = () => {
-    if (portfolioHistory.length < 2) return ''
-    
-    const min = Math.min(...portfolioHistory)
-    const max = Math.max(...portfolioHistory)
-    const range = max - min || 1
-    const width = 100
-    const height = 100
-    const step = width / (portfolioHistory.length - 1)
-    
-    const points = portfolioHistory.map((value, i) => {
-      const x = i * step
-      const y = height - ((value - min) / range) * height
-      return `${x},${y}`
-    })
-    
-    return `M ${points.join(' L ')}`
-  }
+  }, [])
 
   return (
-    <div className="h-full bg-[rgba(5,1,0,0.85)] p-4 overflow-auto">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-[var(--font-orbitron)] text-3xl font-bold text-[#ff7700] [text-shadow:var(--glow-orange)]">
-            JARVIS PRE TERM — Terminal Overview
-          </h1>
-          <div className="flex items-center gap-3">
-            <span className="bg-[rgba(255,34,68,0.15)] border border-[rgba(255,34,68,0.5)] text-[#ff2244] text-[9px] px-3 py-1 rounded-sm tracking-[2px] font-[var(--font-orbitron)] animate-[liveBlink_1s_step-end_infinite]">
-              ● LIVE
-            </span>
-            <span className="text-[rgba(255,119,0,0.6)] text-sm font-mono">
-              {clock}
-            </span>
+    <div className="h-full bg-[rgba(5,1,0,0.98)] overflow-hidden flex flex-col font-sans select-none p-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between mb-8 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 bg-[#ff7700] rounded-lg flex items-center justify-center font-bold text-black border-2 border-[#ffaa00] shadow-[0_0_30px_rgba(255,119,0,0.3)]">
+             <span className="font-black text-xl">JG</span>
           </div>
-        </div>
-
-        {/* Top Metrics Bar */}
-        <div className="grid grid-cols-8 gap-3 mb-4">
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Portfolio</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#ff7700] font-bold">
-              ${(portfolioValue / 1000000).toFixed(2)}M
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">24h P&L</div>
-            <div className={`font-[var(--font-orbitron)] text-base font-bold ${dailyPnL >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-              {dailyPnL >= 0 ? '+' : ''}${(dailyPnL / 1000).toFixed(1)}K
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Positions</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#ffcc00] font-bold">{activePositions}</div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Volume</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#ff7700] font-bold">
-              ${metrics.volume24h.toFixed(1)}T
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Latency</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#00ff9d] font-bold">
-              {metrics.avgLatency.toFixed(2)}ms
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Win Rate</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#00ff9d] font-bold">
-              {metrics.winRate.toFixed(1)}%
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Trades/min</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#ff00aa] font-bold">
-              {metrics.tradesMin}
-            </div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="text-[rgba(255,119,0,0.6)] text-[10px] mb-1 font-medium">Risk</div>
-            <div className="font-[var(--font-orbitron)] text-base text-[#ff2244] font-bold">
-              {Math.max(0, Math.min(100, metrics.riskDeployed)).toFixed(0)}%
+          <div>
+            <h1 className="font-[var(--font-orbitron)] text-2xl font-black tracking-tighter text-white">
+                FINANCIAL COMMAND CENTER
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+               <div className="h-2 w-2 rounded-full bg-[#00ff9d] animate-pulse" />
+               <span className="text-[10px] text-white/40 font-mono tracking-widest uppercase">Global Markets: Synchronized</span>
             </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-[1fr_500px_1fr] gap-4 mb-4">
-          {/* Left: Crypto Markets */}
-          <div className="space-y-3">
-            <h2 className="font-[var(--font-orbitron)] text-sm font-bold text-[#00ff9d] mb-2 [text-shadow:var(--glow-green)]">
-              CRYPTO MARKETS
-            </h2>
-            {Object.entries(cryptoPrices).map(([symbol, data]) => {
-              const isPositive = parseFloat(data.change) >= 0
-              return (
-                <div
-                  key={symbol}
-                  className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 hover:bg-[rgba(10,3,0,0.8)] transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-[var(--font-orbitron)] text-xs text-[#ff7700] mb-1 font-semibold">
-                        {symbol.replace('USDT', '/USDT')}
-                      </div>
-                      <div className="font-mono text-lg text-[#00ff9d] font-bold">
-                        ${data.price}
-                      </div>
-                    </div>
-                    <div className={`text-sm font-bold ${isPositive ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                      {isPositive ? '+' : ''}{data.change}%
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+        
+        <div className="flex items-center gap-10">
+          <div className="flex flex-col items-end">
+             <span className="text-[10px] text-white/30 uppercase font-black tracking-[0.2em]">Net Liquidity</span>
+             <span className="text-white font-mono font-black text-2xl tracking-tighter">
+                ${portfolioValue.toLocaleString()} <span className="text-[12px] text-[#00ff9d]">+{dailyPnL}%</span>
+             </span>
           </div>
-
-          {/* Center: Portfolio Chart */}
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-[var(--font-orbitron)] text-sm font-bold text-[#00ff9d] [text-shadow:var(--glow-green)]">
-                PORTFOLIO VALUE
-              </h2>
-              <span className="bg-[rgba(255,34,68,0.15)] border border-[rgba(255,34,68,0.5)] text-[#ff2244] text-[8px] px-2 py-0.5 rounded-sm tracking-[2px] font-[var(--font-orbitron)] animate-[liveBlink_1s_step-end_infinite]">
-                ● LIVE
-              </span>
-            </div>
-            
-            <div className="text-center mb-4">
-              <div className="font-[var(--font-orbitron)] text-3xl text-[#ff7700] font-black [text-shadow:var(--glow-orange)]">
-                ${portfolioValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              </div>
-              <div className={`text-base font-bold mt-1 ${dailyPnL >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                {dailyPnL >= 0 ? '+' : ''}${dailyPnL.toFixed(2)} (24h)
-              </div>
-            </div>
-
-            <div className="relative h-[280px] bg-[rgba(0,0,0,0.5)] rounded-lg p-2">
-              <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="portfolioGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ff7700" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#ff7700" stopOpacity="0.05" />
-                  </linearGradient>
-                </defs>
-                {portfolioHistory.length > 1 && (
-                  <>
-                    <path
-                      d={`${getPortfolioPath()} L 100,100 L 0,100 Z`}
-                      fill="url(#portfolioGradient)"
-                    />
-                    <path
-                      d={getPortfolioPath()}
-                      fill="none"
-                      stroke="#ff7700"
-                      strokeWidth="2"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </>
-                )}
-              </svg>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="text-center">
-                <div className="text-[rgba(255,119,0,0.6)] text-[9px]">Total P&L</div>
-                <div className={`font-mono text-sm font-bold ${totalPnL >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                  {totalPnL >= 0 ? '+' : ''}${(totalPnL / 1000).toFixed(1)}K
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-[rgba(255,119,0,0.6)] text-[9px]">Win Rate</div>
-                <div className="font-mono text-sm font-bold text-[#00ff9d]">
-                  {metrics.winRate.toFixed(1)}%
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-[rgba(255,119,0,0.6)] text-[9px]">Sharpe</div>
-                <div className="font-mono text-sm font-bold text-[#ff7700]">2.34</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Market Indices */}
-          <div className="space-y-3">
-            <h2 className="font-[var(--font-orbitron)] text-sm font-bold text-[#00ff9d] mb-2 [text-shadow:var(--glow-green)]">
-              MARKET INDICES
-            </h2>
-            {indices.map((index) => {
-              const isPositive = index.change >= 0
-              return (
-                <div
-                  key={index.name}
-                  className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 hover:bg-[rgba(10,3,0,0.8)] transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-[var(--font-orbitron)] text-xs text-[#ff7700] mb-1 font-semibold">
-                        {index.name}
-                      </div>
-                      <div className="font-mono text-lg text-[#00ff9d] font-bold">
-                        {index.value.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className={`text-sm font-bold ${isPositive ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                      {isPositive ? '+' : ''}{index.change.toFixed(2)}%
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* Live Activity Feed */}
-            <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 mt-4">
-              <h3 className="font-[var(--font-orbitron)] text-xs font-bold text-[#ff00aa] mb-2">
-                LIVE ACTIVITY
-              </h3>
-              <div className="space-y-1 max-h-[180px] overflow-hidden">
-                {activities.map((activity, i) => (
-                  <div
-                    key={i}
-                    className="text-[9px] text-[rgba(255,119,0,0.7)] font-mono border-b border-[rgba(255,119,0,0.05)] pb-1 animate-[sigFade_0.3s_ease]"
-                  >
-                    {activity}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom: System Status */}
-        <div className="grid grid-cols-4 gap-3">
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#ff7700] text-sm font-semibold">Crypto Markets</span>
-              <span className="text-[#00ff9d] text-xs font-bold">● OPEN</span>
-            </div>
-            <div className="text-[rgba(255,119,0,0.6)] text-xs">24/7 Trading Active</div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#ff7700] text-sm font-semibold">US Markets</span>
-              <span className="text-[rgba(255,34,68,0.8)] text-xs font-bold">● CLOSED</span>
-            </div>
-            <div className="text-[rgba(255,119,0,0.6)] text-xs">Opens Monday 09:30 EST</div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#ff7700] text-sm font-semibold">BIST</span>
-              <span className="text-[rgba(255,34,68,0.8)] text-xs font-bold">● CLOSED</span>
-            </div>
-            <div className="text-[rgba(255,119,0,0.6)] text-xs">Pazartesi 10:00'da Açılış</div>
-          </div>
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#ff7700] text-sm font-semibold">System Status</span>
-              <span className="text-[#00ff9d] text-xs font-bold">● OPTIMAL</span>
-            </div>
-            <div className="text-[rgba(255,119,0,0.6)] text-xs">All Systems Operational</div>
+          <div className="text-right">
+             <span className="text-[10px] text-white/30 uppercase font-black tracking-[0.2em]">System Time</span>
+             <div className="text-white font-mono font-black text-2xl tracking-tighter">{clock}</div>
           </div>
         </div>
       </div>
+
+      {/* Main 4-Widget Grid */}
+      <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6 overflow-hidden">
+        <DashboardWidget title="Global Indices" items={indices} color="#ff7700" />
+        <DashboardWidget title="Major Assets" items={majorPairs} color="#00ff9d" />
+        <DashboardWidget title="Market Pulse" items={marketPulse} color="#ff00aa" />
+        
+        {/* News & Intel Column */}
+        <div className="bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.15)] rounded-xl p-5 shadow-2xl flex flex-col">
+           <h3 className="text-[10px] font-black tracking-[0.25em] text-white/40 uppercase mb-4 border-b border-white/5 pb-2">Global Intel Feed</h3>
+           <div className="flex-1 overflow-y-auto space-y-5 custom-scrollbar pr-2">
+              {news.map((n, i) => (
+                <div key={i} className="group cursor-pointer">
+                   <div className="flex items-center justify-between mb-1">
+                      <span className="text-[8px] font-black text-[#ff7700] tracking-widest">{n.source}</span>
+                      <span className="text-[8px] text-white/30">{n.time}</span>
+                   </div>
+                   <p className="text-[11px] text-white/90 font-bold leading-relaxed group-hover:text-[#ff7700] transition-colors">{n.title}</p>
+                </div>
+              ))}
+           </div>
+           <div className="mt-4 pt-4 border-t border-white/5">
+              <button className="w-full py-2 bg-white/5 rounded border border-white/10 text-[9px] font-black text-white/60 hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest">
+                 View All Intelligence
+              </button>
+           </div>
+        </div>
+      </div>
+
+      {/* System Status Row */}
+      <div className="grid grid-cols-5 gap-4 shrink-0">
+        {[
+          { label: 'Binance API', status: 'Optimal', latency: '12ms' },
+          { label: 'Polymarket CLOB', status: 'Synced', latency: '42ms' },
+          { label: 'OKX Bridge', status: 'Connected', latency: '18ms' },
+          { label: 'Macro Feed', status: 'Live', latency: '110ms' },
+          { label: 'Jarvis Core', status: 'Ready', latency: '0.4ms' },
+        ].map((sys, i) => (
+          <div key={i} className="bg-white/5 border border-white/10 p-3 rounded-lg flex items-center justify-between">
+             <div className="flex flex-col">
+                <span className="text-[8px] text-white/30 uppercase font-bold tracking-widest">{sys.label}</span>
+                <span className="text-[10px] text-white font-black">{sys.status}</span>
+             </div>
+             <span className="text-[9px] font-mono text-[#00ff9d]">{sys.latency}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Background Decorative Element */}
+      <div className="fixed -bottom-20 -left-20 w-[500px] h-[500px] bg-[#ff7700]/5 blur-[150px] rounded-full -z-10" />
+      <div className="fixed -top-20 -right-20 w-[500px] h-[500px] bg-[#00ff9d]/5 blur-[150px] rounded-full -z-10" />
     </div>
   )
 }

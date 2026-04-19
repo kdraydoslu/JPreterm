@@ -143,6 +143,33 @@ class PolymarketService {
     }
   }
 
+  async fetchOrderBook(tokenId: string): Promise<{ bids: any[], asks: any[] }> {
+    try {
+      const response = await fetch(`https://clob.polymarket.com/book?token_id=${tokenId}`)
+      if (!response.ok) throw new Error('Failed to fetch order book')
+      const data = await response.json()
+      return {
+        bids: data.bids || [],
+        asks: data.asks || []
+      }
+    } catch (error) {
+      console.error('Failed to fetch order book:', error)
+      return { bids: [], asks: [] }
+    }
+  }
+
+  async fetchPriceHistory(tokenId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`https://clob.polymarket.com/prices-history?token_id=${tokenId}&interval=60`)
+      if (!response.ok) throw new Error('Failed to fetch price history')
+      const data = await response.json()
+      return data.history || []
+    } catch (error) {
+      console.error('Failed to fetch price history:', error)
+      return []
+    }
+  }
+
   async fetchTrades(): Promise<Trade[]> {
     if (!this.config) return []
 
