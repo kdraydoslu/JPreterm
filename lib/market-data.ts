@@ -28,9 +28,45 @@ export interface TickerData {
 class MarketDataService {
   private wsConnections: Map<string, WebSocket> = new Map()
   private orderBookCallbacks: Map<string, (data: OrderBookData) => void> = new Map()
-  private tradeCallbacks: Map<string, (data: TradeData) => void> = new Map()
   private tickerCallbacks: Map<string, (data: TickerData) => void> = new Map()
   private allTickersCallback: ((data: TickerData[]) => void) | null = null
+  private finnhubToken = 'd7ije29r01qn2qau9hk0d7ije29r01qn2qau9hkg'
+  private finnhubWs: WebSocket | null = null
+  private finnhubCallbacks: Map<string, (price: number) => void> = new Map()
+
+  // Subscribe to Finnhub for real-time Stocks/FX/Indices
+  subscribeFinnhub(symbols: string[], callback: (symbol: string, price: number) => void) {
+    if (!this.finnhubWs) {
+      this.finnhubWs = new WebSocket(`wss://ws.finnhub.io?token=${this.finnhubToken}`)
+      this.finnhubWs.onopen = () => {
+        symbols.forEach(s => {
+          this.finnhubWs?.send(JSON.stringify({ 'type': 'subscribe', 'symbol': s }))
+        })
+      }
+      this.finnhubWs.onmessage = (event) => {
+        const data = JSON.parse(event.data)
+        if (data.type === 'trade' && data.data) {
+          data.data.forEach((trade: any) => {
+            callback(trade.s, trade.p)
+          })
+        }
+      }
+    } else if (this.finnhubWs.readyState === WebSocket.OPEN) {
+      symbols.forEach(s => {
+        this.finnhubWs?.send(JSON.stringify({ 'type': 'subscribe', 'symbol': s }))
+      })
+    }
+  }
+
+  // Fetch initial quote from Finnhub
+  async fetchFinnhubQuote(symbol: string) {
+    try {
+      const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${this.finnhubToken}`)
+      return await response.json()
+    } catch (e) {
+      return null
+    }
+  }
 
   // Subscribe to all 24hr tickers at once
   subscribeAllTickers(callback: (data: TickerData[]) => void) {
