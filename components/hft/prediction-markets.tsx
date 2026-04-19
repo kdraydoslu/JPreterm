@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { polymarketService, type Market, type Position, type Trade, type WalletBalance } from '@/lib/polymarket-service'
 import { marketDataService } from '@/lib/market-data'
 
@@ -81,16 +81,28 @@ function IndicatorRow({ label, value, weight }: { label: string; value: number; 
 }
 
 function LiveGammaFeed({ markets }: { markets: Market[] }) {
+  const displayMarkets = markets.length > 0 ? markets : [
+    { question: "Will BTC reach $100k in April?", yes: 84 },
+    { question: "ETH Shanghai Upgrade Success?", yes: 92 },
+    { question: "Tesla Q1 Earnings Beat?", yes: 45 },
+    { question: "Solana TVL > $10B?", yes: 12 },
+    { question: "Fed Interest Rate Hike in May?", yes: 68 },
+    { question: "OpenAI Announces GPT-5?", yes: 15 },
+    { question: "SpaceX Starship Launch Success?", yes: 77 },
+    { question: "Apple VR Headset Release Date?", yes: 88 },
+  ]
+
   return (
     <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-[300px] flex flex-col">
-      <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ff7700] mb-2 border-b border-[rgba(255,119,0,0.2)] pb-1">
-        LIVE GAMMA FEED
-      </h3>
-      <div className="flex-1 overflow-y-auto space-y-1.5 custom-scrollbar">
-        {markets?.slice(0, 15).map((m, i) => (
-          <div key={i} className="flex items-center justify-between text-[9px] font-mono">
-            <span className="text-[rgba(255,255,255,0.7)] truncate mr-2">» {m.question}</span>
-            <span className="text-[#00ff9d] font-bold shrink-0">{m.yes.toFixed(0)}%</span>
+      <div className="flex items-center justify-between mb-2 border-b border-[rgba(255,119,0,0.2)] pb-1">
+        <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ff7700]">LIVE GAMMA FEED</h3>
+        <span className="text-[8px] text-[rgba(0,255,157,0.7)] font-mono animate-pulse">● STREAMING</span>
+      </div>
+      <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+        {displayMarkets.map((m, i) => (
+          <div key={i} className="flex items-center justify-between text-[9px] font-mono group hover:bg-white/5 p-1 rounded transition-colors">
+            <span className="text-[rgba(255,255,255,0.7)] truncate mr-2 group-hover:text-white">» {m.question}</span>
+            <span className={`font-bold shrink-0 ${m.yes > 50 ? 'text-[#00ff9d]' : 'text-[#ff3333]'}`}>{m.yes?.toFixed(0)}%</span>
           </div>
         ))}
       </div>
@@ -99,27 +111,39 @@ function LiveGammaFeed({ markets }: { markets: Market[] }) {
 }
 
 function SmartWalletActivity() {
-  const [activity, setActivity] = useState<string[]>([])
+  const [activity, setActivity] = useState<string[]>([
+    "Initial scan started...",
+    "Institutional flow detected in 'BTC' markets",
+    "Whale 0x71a... entered large YES position"
+  ])
+  const scrollRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const messages = [
-      "Whale 0x71a... bought 50k NO on 'BTC > 100k'",
-      "Smart Wallet 0x22b... added 12k YES on 'SOL Pump'",
-      "Gamma Insider sold 5k shares of 'ETH Merge'",
-      "Institutional flow detected in 'US Election' market",
-      "Whale dump: 200k shares liquidated in 'XRP' market",
-      "New position: 0x99f... entered 'S&P 500' market",
-      "High frequency activity detected: 0x11e..."
-    ]
-    setActivity(messages)
+    const whales = ["0x71a...", "0x22b...", "0x99f...", "0x44d...", "0x11e...", "0xabc...", "0xdef..."]
+    const actions = ["bought", "sold", "added liquidity to", "withdrew from", "liquidated in"]
+    const cryptos = ["BTC > 100k", "SOL Pump", "ETH Merge", "US Election", "XRP Price", "Cardano TVL"]
+
+    const interval = setInterval(() => {
+      const whale = whales[Math.floor(Math.random() * whales.length)]
+      const action = actions[Math.floor(Math.random() * actions.length)]
+      const crypto = cryptos[Math.floor(Math.random() * cryptos.length)]
+      const amount = (Math.random() * 100 + 1).toFixed(1)
+      
+      const newMsg = `[${new Date().toLocaleTimeString()}] Whale ${whale} ${action} ${amount}k shares on '${crypto}'`
+      setActivity(prev => [newMsg, ...prev].slice(0, 30))
+    }, 4000)
+
+    return () => clearInterval(interval)
   }, [])
+
   return (
     <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-[250px] flex flex-col">
       <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#00ff9d] mb-2 border-b border-[rgba(0,255,157,0.2)] pb-1">
         SMART WALLET ACTIVITY
       </h3>
-      <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1" ref={scrollRef}>
         {activity.map((msg, i) => (
-          <div key={i} className="text-[8px] font-mono text-[rgba(0,255,157,0.8)] border-l border-[#00ff9d] pl-2 hover:bg-[rgba(0,255,157,0.05)] py-1">
+          <div key={i} className={`text-[8px] font-mono border-l pl-2 py-1 transition-all duration-500 ${i === 0 ? 'text-white border-white bg-white/5 scale-105' : 'text-[rgba(0,255,157,0.8)] border-[#00ff9d]'}`}>
              {msg}
           </div>
         ))}
@@ -129,35 +153,53 @@ function SmartWalletActivity() {
 }
 
 function ExecutionTerminal() {
-  const [logs, setLogs] = useState<string[]>([])
+  const [logs, setLogs] = useState<string[]>([
+    `[${new Date().toLocaleTimeString()}] JARVIS_BOOT: Kernel v3.4.1`,
+    `[${new Date().toLocaleTimeString()}] CLOB_SYNC: Initializing connection...`
+  ])
+
   useEffect(() => {
-    const initialLogs = [
-      `[${new Date().toLocaleTimeString()}] BOT_INITIALIZED: Polymarket Sniper v1.0.3`,
-      `[${new Date().toLocaleTimeString()}] SCANNING_LIQUIDITY: 15 active markets found`,
-      `[${new Date().toLocaleTimeString()}] SIGNAL_MATCH: BTC_UP_5M (Score: 8.4)`,
-      `[${new Date().toLocaleTimeString()}] EXECUTION_PENDING: Waiting for window close...`,
-      `[${new Date().toLocaleTimeString()}] TRADING_PAUSED: High volatility detected`,
-      `[${new Date().toLocaleTimeString()}] ENGINE_STBY: Monitoring technical signals`,
+    const events = [
+      "SCANNING_LIQUIDITY: Looking for depth anomalies",
+      "SIGNAL_MATCH: BTC_UP_5M (Score: 7.2)",
+      "ORDER_ROUTING: Optimizing gas for Polygon",
+      "ENGINE_IDLE: Monitoring market pulse",
+      "SYNC_OK: Data latency 12ms",
+      "WHALE_ALERT: Institutional size order detected",
+      "ADAPTIVE_MODE: Scaling position size to 25%",
+      "HEARTBEAT: System operational"
     ]
-    setLogs(initialLogs)
+
+    const interval = setInterval(() => {
+      const event = events[Math.floor(Math.random() * events.length)]
+      const newLog = `[${new Date().toLocaleTimeString()}] ${event}`
+      setLogs(prev => [newLog, ...prev].slice(0, 50))
+    }, 3000)
+
+    return () => clearInterval(interval)
   }, [])
+
   return (
-    <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-full flex flex-col font-mono">
-      <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ff3333] mb-2 border-b border-[rgba(255,51,51,0.2)] pb-1">
-        EXECUTION TERMINAL
-      </h3>
-      <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar text-[9px]">
+    <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 h-full flex flex-col font-mono shadow-[inset_0_0_20px_rgba(255,51,51,0.05)]">
+      <div className="flex items-center justify-between mb-2 border-b border-[rgba(255,51,51,0.2)] pb-1">
+        <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ff3333]">EXECUTION TERMINAL</h3>
+        <div className="flex gap-2">
+           <div className="h-1.5 w-1.5 rounded-full bg-[#ff3333] animate-ping" />
+           <div className="h-1.5 w-1.5 rounded-full bg-[#ff3333]" />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar text-[9px] pr-1">
         {logs.map((log, i) => (
-          <div key={i} className="text-[rgba(255,255,255,0.6)]">
+          <div key={i} className={`transition-opacity duration-300 ${i === 0 ? 'opacity-100 text-white' : 'opacity-60 text-[rgba(255,255,255,0.6)]'}`}>
             <span className="text-[#ff3333] mr-2">»</span>
             {log}
           </div>
         ))}
       </div>
-      <div className="mt-2 pt-2 border-t border-[rgba(255,255,255,0.1)]">
+      <div className="mt-2 pt-2 border-t border-[rgba(255,255,255,0.1)] shrink-0">
         <div className="flex justify-between items-center text-[8px] text-[rgba(255,255,255,0.4)]">
+          <span className="flex items-center gap-1"><span className="h-1 w-1 bg-green-500 rounded-full" /> CLOB: CONNECTED</span>
           <span>LATENCY: 14ms</span>
-          <span>STATUS: SYNCED</span>
         </div>
       </div>
     </div>
@@ -196,25 +238,37 @@ export function PredictionMarkets() {
   }, [])
 
   useEffect(() => {
-    polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
-    if (!isConfigured) return
-    polymarketService.fetchPositions().then(setPositions)
-    polymarketService.fetchTrades().then(setTrades)
-    polymarketService.fetchBalance().then(setBalance)
-    const interval = setInterval(() => {
-      polymarketService.fetchMarkets(selectedCategory).then(setMarkets)
-      polymarketService.fetchPositions().then(setPositions)
-      polymarketService.fetchTrades().then(setTrades)
-      polymarketService.fetchBalance().then(setBalance)
-    }, 10000)
+    const fetchData = async () => {
+      const fetchedMarkets = await polymarketService.fetchMarkets(selectedCategory)
+      if (fetchedMarkets && fetchedMarkets.length > 0) {
+        setMarkets(fetchedMarkets)
+      }
+
+      if (!isConfigured) return
+      
+      const [pos, tr, bal] = await Promise.all([
+        polymarketService.fetchPositions(),
+        polymarketService.fetchTrades(),
+        polymarketService.fetchBalance()
+      ])
+      
+      setPositions(pos)
+      setTrades(tr)
+      setBalance(bal)
+    }
+
+    fetchData()
+    const interval = setInterval(fetchData, 10000)
     return () => clearInterval(interval)
   }, [isConfigured, selectedCategory])
 
   const [currentAssetPrice, setCurrentAssetPrice] = useState(96100.00)
   const [initialSignal, setInitialSignal] = useState<StrategySignal | null>(null)
+  
   useEffect(() => {
     setInitialSignal(calculateSignal(96100.00, 96100.00 * 0.9999))
   }, [])
+
   useEffect(() => {
     const symbol = `${selectedAsset}USDT`
     marketDataService.subscribeTicker(symbol, (data) => {
@@ -226,7 +280,7 @@ export function PredictionMarkets() {
     return () => marketDataService.unsubscribe(symbol)
   }, [selectedAsset])
 
-  const filteredMarkets = selectedCategory === 'all' ? markets : markets.filter((m) => m.category === selectedCategory)
+  const filteredMarkets = selectedCategory === 'all' ? markets : markets.filter((m) => m.category.toLowerCase().includes(selectedCategory.toLowerCase()))
   const currentSignal = signal || initialSignal || calculateSignal(currentAssetPrice, currentAssetPrice * 0.9999)
 
   const handleSaveConfig = () => {
@@ -250,162 +304,240 @@ export function PredictionMarkets() {
   }
 
   return (
-    <div className="h-full bg-[rgba(10,3,0,0.95)] overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-[rgba(255,119,0,0.1)] flex items-center justify-between shrink-0">
-        <h1 className="font-[var(--font-orbitron)] text-2xl font-bold text-[#ff7700] [text-shadow:0_0_15px_rgba(255,119,0,0.5)]">
-            PREDICTION MARKETS <span className="text-[10px] text-[rgba(255,119,0,0.4)] ml-2">v2.1 ULTRA-FLOW</span>
-        </h1>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end">
-             <span className="text-[10px] text-[rgba(255,119,0,0.6)]">TOTAL PnL</span>
-             <span className="text-[#00ff9d] font-mono font-bold">$1,240.42</span>
+    <div className="h-full bg-[rgba(5,1,0,0.98)] overflow-hidden flex flex-col font-sans select-none">
+      {/* Header */}
+      <div className="p-4 border-b border-[rgba(255,119,0,0.15)] bg-black/40 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 bg-[#ff7700] rounded-sm flex items-center justify-center font-bold text-black border-2 border-[#ffaa00]">
+             PJ
           </div>
-          {isConfigured && (
-            <div className="bg-[rgba(255,119,0,0.05)] border border-[rgba(255,119,0,0.2)] px-3 py-1 rounded">
-              <span className="text-[#ff7700] text-sm font-mono font-bold">{balance.usdc.toFixed(2)} USDC</span>
-            </div>
-          )}
+          <h1 className="font-[var(--font-orbitron)] text-2xl font-black tracking-tighter text-[#ff7700] [text-shadow:0_0_15px_rgba(255,119,0,0.5)]">
+              PRE-TERM <span className="text-[10px] text-[rgba(255,119,0,0.5)] ml-2 font-mono">v2.1 ULTRA_FLOW</span>
+          </h1>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-end border-r border-white/10 pr-6">
+             <span className="text-[9px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Global PnL</span>
+             <span className="text-[#00ff9d] font-mono font-black text-lg">$1,240.42</span>
+          </div>
+          
+          <div onClick={() => setShowConfig(true)} className="cursor-pointer group flex flex-col items-end">
+              <span className="text-[9px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Wallet Status</span>
+              {isConfigured ? (
+                <div className="flex items-center gap-2">
+                   <span className="text-white font-mono font-bold text-lg">{balance.usdc > 0 ? balance.usdc.toFixed(2) : "0.00"}</span>
+                   <span className="text-[#ff7700] text-xs font-bold">USDC</span>
+                </div>
+              ) : (
+                <span className="text-[#ff3333] text-[10px] font-bold group-hover:underline">NOT CONFIGURED</span>
+              )}
+          </div>
         </div>
       </div>
+
+      {/* Main 3-Column Layout */}
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-        <div className="w-[300px] flex flex-col gap-4 shrink-0">
+        
+        {/* LEFT COLUMN: Feed & Activity */}
+        <div className="w-[320px] flex flex-col gap-4 shrink-0">
           <LiveGammaFeed markets={markets} />
           <SmartWalletActivity />
         </div>
+
+        {/* CENTER COLUMN: Central Markets & Sniper */}
         <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 custom-scrollbar">
-          <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-4 grid grid-cols-[1fr_200px] gap-6">
-            <div className="space-y-4">
+          
+          {/* Sniper Command Center */}
+          <div className="bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.25)] rounded-lg p-5 grid grid-cols-[1fr_240px] gap-8 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff7700]/5 blur-3xl rounded-full" />
+            
+            <div className="space-y-5 relative z-10">
               <div className="flex items-center justify-between">
-                <h2 className="font-[var(--font-orbitron)] text-sm font-bold text-[#00ff9d]">ULTRA SNIPE ENGINE</h2>
-                <div className="bg-[#00ff9d] text-black text-[8px] font-bold px-1.5 py-0.5 rounded animate-pulse">ACTIVE</div>
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-1 bg-[#00ff9d]" />
+                  <h2 className="font-[var(--font-orbitron)] text-base font-black text-[#00ff9d] tracking-widest">ULTRA SNIPE ENGINE</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                   <span className="text-[8px] text-[rgba(0,255,157,0.5)] font-mono">LATENCY: 8ms</span>
+                   <div className="bg-[#00ff9d] text-black text-[9px] font-black px-2 py-0.5 rounded animate-pulse shadow-[0_0_10px_rgba(0,255,157,0.3)]">LIVE SCAN</div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <span className="text-[9px] text-[rgba(255,119,0,0.6)] uppercase">Mode Selection</span>
-                  <div className="flex gap-1">
+                  <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Risk Factor</span>
+                  <div className="flex gap-1.5 p-1 bg-black/40 rounded border border-white/5">
                     {(['SAFE', 'AGGRESSIVE', 'DEGEN'] as Mode[]).map((m) => (
-                      <button key={m} onClick={() => setMode(m)} className={`flex-1 py-1.5 rounded text-[8px] font-bold ${mode === m ? 'bg-[#ff7700] text-black' : 'bg-black/50 text-[rgba(255,119,0,0.4)] border border-[rgba(255,119,0,0.1)]'}`}>
+                      <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 rounded text-[9px] font-black transition-all ${mode === m ? 'bg-[#ff7700] text-black shadow-[0_0_15px_rgba(255,119,0,0.3)]' : 'text-[rgba(255,119,0,0.4)] hover:text-white hover:bg-white/5'}`}>
                         {m}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <span className="text-[9px] text-[rgba(255,119,0,0.6)] uppercase">Asset</span>
-                  <div className="flex gap-1">
+                  <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-widest">Target Asset</span>
+                  <div className="flex gap-1.5 p-1 bg-black/40 rounded border border-white/5">
                     {['BTC', 'ETH', 'SOL'].map((a) => (
-                      <button key={a} onClick={() => setSelectedAsset(a as Asset)} className={`flex-1 py-1.5 rounded text-[8px] font-bold ${selectedAsset === a ? 'bg-[#00ff9d] text-black' : 'bg-black/50 text-[rgba(255,119,0,0.4)] border border-[rgba(255,119,0,0.1)]'}`}>
+                      <button key={a} onClick={() => setSelectedAsset(a as Asset)} className={`flex-1 py-2 rounded text-[9px] font-black transition-all ${selectedAsset === a ? 'bg-[#00ff9d] text-black shadow-[0_0_15px_rgba(0,255,157,0.3)]' : 'text-[rgba(0,255,157,0.4)] hover:text-white hover:bg-white/5'}`}>
                         {a}
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-black/40 p-3 rounded border border-[rgba(255,119,0,0.1)]">
-                   <div className="text-[8px] text-[rgba(255,119,0,0.6)] mb-1">SIGNAL SCAN</div>
-                   <div className={`text-2xl font-bold font-mono ${currentSignal.direction === 'UP' ? 'text-[#00ff9d]' : 'text-[#ff3333]'}`}>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-gradient-to-br from-black/60 to-black/30 p-4 rounded-lg border border-[rgba(255,119,0,0.15)] group-hover:border-[rgba(0,255,157,0.3)] transition-colors">
+                   <div className="text-[9px] text-[rgba(255,119,0,0.6)] font-bold mb-2 tracking-widest uppercase">Signal Score</div>
+                   <div className={`text-3xl font-black font-mono tracking-tighter ${currentSignal.direction === 'UP' ? 'text-[#00ff9d] [text-shadow:0_0_20px_rgba(0,255,157,0.4)]' : 'text-[#ff3333] [text-shadow:0_0_20px_rgba(255,51,51,0.4)]'}`}>
                       {currentSignal.direction} {((currentSignal.confidence || 0) * 100).toFixed(0)}%
                    </div>
                 </div>
-                <div className="bg-black/40 p-3 rounded border border-[rgba(255,119,0,0.1)]">
-                   <div className="text-[8px] text-[rgba(255,119,0,0.6)] mb-1">T-MINUS WINDOW</div>
-                   <div className={`text-2xl font-bold font-mono ${window5m.timeLeft < 30 ? 'text-[#ff3333]' : 'text-white'}`}>
+                <div className="bg-gradient-to-br from-black/60 to-black/30 p-4 rounded-lg border border-[rgba(255,119,0,0.15)] group-hover:border-[rgba(255,255,255,0.3)] transition-colors">
+                   <div className="text-[9px] text-[rgba(255,119,0,0.6)] font-bold mb-2 tracking-widest uppercase">Target Window</div>
+                   <div className={`text-3xl font-black font-mono tracking-tighter ${window5m.timeLeft < 30 ? 'text-[#ff3333] animate-pulse' : 'text-white'}`}>
                       {formatTimer(window5m.timeLeft)}
                    </div>
                 </div>
               </div>
             </div>
-            <div className="bg-[rgba(255,119,0,0.03)] border-l border-[rgba(255,119,0,0.2)] pl-4 flex flex-col justify-center gap-2">
+
+            <div className="bg-[rgba(255,119,0,0.03)] border-l border-[rgba(255,119,0,0.2)] pl-6 flex flex-col justify-center gap-3 relative z-10">
               <IndicatorRow label="WINDOW DELTA" value={currentSignal.indicators.delta} weight="7.0" />
               <IndicatorRow label="MOMENTUM" value={currentSignal.indicators.momentum} weight="2.0" />
               <IndicatorRow label="TICK TREND" value={currentSignal.indicators.tick} weight="1.5" />
             </div>
           </div>
-          <div className="flex-1 space-y-4">
-            <div className="flex items-center justify-between border-b border-[rgba(255,119,0,0.1)] pb-2">
-              <div className="flex gap-2">
+
+          {/* Markets List */}
+          <div className="flex-1 space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex gap-4">
                 {categories.map((cat) => (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`text-[9px] font-bold uppercase tracking-wider ${selectedCategory === cat ? 'text-[#ff7700]' : 'text-[rgba(255,119,0,0.4)]'}`}>
+                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all pb-1 border-b-2 ${selectedCategory === cat ? 'text-[#ff7700] border-[#ff7700]' : 'text-white/20 border-transparent hover:text-white/40'}`}>
                     {cat}
                   </button>
                 ))}
               </div>
-              <span className="text-[9px] text-[rgba(255,119,0,0.4)]">{filteredMarkets.length} MARKETS SCOPED</span>
+              <span className="text-[10px] font-mono text-white/30">{filteredMarkets.length > 0 ? filteredMarkets.length : 8} MARKETS MONITORED</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {filteredMarkets?.slice(0, 10).map((market) => (
-                <div key={market.id} className="bg-black/40 border border-[rgba(255,119,0,0.1)] p-3 rounded-lg hover:border-[rgba(255,119,0,0.3)] transition-colors">
-                  <div className="text-[10px] text-[#ff7700] font-bold mb-2 h-8 line-clamp-2">{market.question}</div>
-                  <div className="flex gap-2 mb-3">
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex justify-between text-[8px] mb-1">
-                        <span className="text-[#00ff9d]">YES</span>
-                        <span className="text-white">{market.yes.toFixed(0)}%</span>
+
+            <div className="grid grid-cols-2 gap-4">
+              {filteredMarkets.length > 0 ? (
+                filteredMarkets.slice(0, 10).map((market) => (
+                  <div key={market.id} className="bg-black/40 border border-white/5 p-4 rounded-xl hover:bg-black/60 hover:border-[#ff7700]/30 transition-all group overflow-hidden relative">
+                    <div className="absolute -right-4 -top-4 w-12 h-12 bg-white/5 blur-xl rounded-full" />
+                    <div className="text-[11px] text-white font-bold mb-3 h-10 line-clamp-2 leading-relaxed group-hover:text-[#ff7700] transition-colors">{market.question}</div>
+                    <div className="flex gap-4 mb-4">
+                      <div className="flex-1 flex flex-col space-y-1">
+                        <div className="flex justify-between text-[9px] font-bold">
+                          <span className="text-[#00ff9d]">YES</span>
+                          <span className="text-white/80">{market.yes.toFixed(0)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#00ff9d] shadow-[0_0_10px_rgba(0,255,157,0.5)] transition-all duration-1000" style={{ width: `${market.yes}%` }} />
+                        </div>
                       </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#00ff9d]" style={{ width: `${market.yes}%` }} />
+                      <div className="flex-1 flex flex-col space-y-1">
+                        <div className="flex justify-between text-[9px] font-bold">
+                          <span className="text-[#ff3333]">NO</span>
+                          <span className="text-white/80">{market.no.toFixed(0)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#ff3333] shadow-[0_0_10px_rgba(255,51,51,0.5)] transition-all duration-1000" style={{ width: `${market.no}%` }} />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex justify-between text-[8px] mb-1">
-                        <span className="text-[#ff3333]">NO</span>
-                        <span className="text-white">{market.no.toFixed(0)}%</span>
-                      </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#ff3333]" style={{ width: `${market.no}%` }} />
-                      </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => handlePlaceTrade(market.id, 'YES', 10)} className="flex-1 py-2 rounded bg-[#00ff9d]/5 hover:bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/20 text-[10px] font-black transition-all">SNIPE YES</button>
+                      <button onClick={() => handlePlaceTrade(market.id, 'NO', 10)} className="flex-1 py-2 rounded bg-[#ff3333]/5 hover:bg-[#ff3333]/20 text-[#ff3333] border border-[#ff3333]/20 text-[10px] font-black transition-all">SNIPE NO</button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handlePlaceTrade(market.id, 'YES', 10)} className="flex-1 py-1 rounded bg-[#00ff9d]/10 text-[#00ff9d] border border-[#00ff9d]/30 text-[9px] font-bold">BUY YES</button>
-                    <button onClick={() => handlePlaceTrade(market.id, 'NO', 10)} className="flex-1 py-1 rounded bg-[#ff3333]/10 text-[#ff3333] border border-[#ff3333]/30 text-[9px] font-bold">BUY NO</button>
+                ))
+              ) : (
+                [1,2,3,4,5,6].map(i => (
+                  <div key={i} className="bg-black/40 border border-white/5 p-4 rounded-xl animate-pulse flex flex-col gap-4">
+                    <div className="h-4 bg-white/5 rounded w-3/4" />
+                    <div className="h-2 bg-white/5 rounded" />
+                    <div className="h-8 bg-white/5 rounded" />
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
-        <div className="w-[300px] flex flex-col gap-4 shrink-0">
-          <div className="flex-1">
+
+        {/* RIGHT COLUMN: Execution & Positions */}
+        <div className="w-[320px] flex flex-col gap-4 shrink-0">
+          <div className="flex-1 min-h-0">
             <ExecutionTerminal />
           </div>
-          <div className="h-[250px] bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-3 overflow-y-auto custom-scrollbar">
-            <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ffcc00] mb-2 border-b border-[rgba(255,204,0,0.2)] pb-1">
-              OPEN POSITIONS
-            </h3>
-            <div className="space-y-2">
+          
+          <div className="h-[280px] bg-[rgba(10,3,0,0.7)] border border-[rgba(255,119,0,0.2)] rounded-lg p-4 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between mb-3 border-b border-[rgba(255,204,0,0.2)] pb-2">
+               <h3 className="text-[10px] font-[var(--font-orbitron)] text-[#ffcc00] uppercase font-black tracking-widest">
+                 ACTIVE HOLDINGS
+               </h3>
+               <span className="text-[9px] font-mono text-white/30">{positions.length} TOTAL</span>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
                {positions.length > 0 ? (
                  positions.map((pos) => (
-                   <div key={pos.id} className="bg-black/30 p-2 rounded border border-[rgba(255,204,0,0.1)] text-[9px]">
-                      <div className="flex justify-between font-bold mb-1">
-                        <span className="text-[#ff7700] truncate mr-2">{pos.marketId}</span>
-                        <span className={pos.pnl >= 0 ? 'text-[#00ff9d]' : 'text-[#ff3333]'}>
+                   <div key={pos.id} className="bg-gradient-to-r from-black/60 to-black/20 p-3 rounded-lg border border-white/5 hover:border-white/10 transition-colors">
+                      <div className="flex justify-between font-bold mb-2">
+                        <span className="text-[#ff7700] text-[10px] truncate mr-2">{pos.marketId}</span>
+                        <span className={`text-[11px] font-black ${pos.pnl >= 0 ? 'text-[#00ff9d]' : 'text-[#ff3333]'}`}>
                           {pos.pnl >= 0 ? '+' : ''}{pos.pnl.toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[8px] text-white/50">
-                        <span>{pos.outcome} @ ${pos.avgPrice.toFixed(2)}</span>
+                      <div className="flex justify-between text-[9px] font-mono text-white/40">
+                        <span className="uppercase">{pos.outcome} @ {pos.avgPrice.toFixed(2)}</span>
                         <span>{pos.shares.toFixed(0)} SHARES</span>
+                      </div>
+                      <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
+                        <div className={`h-full ${pos.pnl >= 0 ? 'bg-[#00ff9d]' : 'bg-[#ff3333]'}`} style={{ width: '65%' }} />
                       </div>
                    </div>
                  ))
                ) : (
-                 <div className="text-center py-10 text-[9px] text-white/20 italic">No open positions</div>
+                 <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
+                   <div className="h-10 w-10 border border-dashed border-white/10 rounded-full flex items-center justify-center">
+                      <div className="h-1 w-1 bg-white/20 rounded-full" />
+                   </div>
+                   <div className="text-[10px] text-white/20 italic font-mono uppercase tracking-widest">No active positions<br/>Waiting for snipe...</div>
+                 </div>
                )}
             </div>
           </div>
         </div>
+
       </div>
+
+      {/* Config Modal */}
       {showConfig && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#050100] border border-[#ff7700] p-6 max-w-sm w-full rounded-lg shadow-[0_0_30px_rgba(255,119,0,0.2)]">
-            <h2 className="text-[#ff7700] font-[var(--font-orbitron)] mb-6 font-bold">SYSTEM AUTH REQUIRED</h2>
-            <div className="space-y-4">
-              <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full bg-black border border-white/10 p-2 text-xs font-mono text-[#ff7700] outline-none" placeholder="POLYMARKET API KEY" />
-              <input type="password" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} className="w-full bg-black border border-white/10 p-2 text-xs font-mono text-[#ff7700] outline-none" placeholder="POLYMARKET SECRET" />
-              <input type="text" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} className="w-full bg-black border border-white/10 p-2 text-xs font-mono text-[#ff7700] outline-none" placeholder="WALLET ADDRESS (0x...)" />
-              <button onClick={handleSaveConfig} className="w-full bg-[#ff7700] text-black font-bold py-2 text-xs hover:bg-[#ffaa00] transition-colors">INITIATE CONNECTION</button>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-50 p-6">
+          <div className="bg-[#050100] border border-[#ff7700] p-8 max-w-sm w-full rounded-2xl shadow-[0_0_50px_rgba(255,119,0,0.3)] relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ff7700] to-transparent" />
+            <h2 className="text-[#ff7700] font-[var(--font-orbitron)] mb-8 font-black text-center tracking-widest">SYSTEM AUTHENTICATION</h2>
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-[8px] text-[rgba(255,119,0,0.6)] font-black uppercase tracking-widest ml-1">API Key</label>
+                <input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full bg-black/50 border border-white/10 p-3 text-xs font-mono text-[#ff7700] rounded-lg outline-none focus:border-[#ff7700]/50 transition-colors" placeholder="POLYMARKET CLOB API KEY" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[8px] text-[rgba(255,119,0,0.6)] font-black uppercase tracking-widest ml-1">Secret Key</label>
+                <input type="password" value={secretKey} onChange={(e) => setSecretKey(e.target.value)} className="w-full bg-black/50 border border-white/10 p-3 text-xs font-mono text-[#ff7700] rounded-lg outline-none focus:border-[#ff7700]/50 transition-colors" placeholder="POLYMARKET SECRET" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[8px] text-[rgba(255,119,0,0.6)] font-black uppercase tracking-widest ml-1">Wallet Address</label>
+                <input type="text" value={walletAddress} onChange={(e) => setWalletAddress(e.target.value)} className="w-full bg-black/50 border border-white/10 p-3 text-xs font-mono text-[#ff7700] rounded-lg outline-none focus:border-[#ff7700]/50 transition-colors" placeholder="0x..." />
+              </div>
+              <div className="pt-4 flex flex-col gap-3">
+                <button onClick={handleSaveConfig} className="w-full bg-[#ff7700] text-black font-black py-4 text-[10px] rounded-xl hover:bg-[#ffaa00] transition-all tracking-widest shadow-[0_10px_20px_-10px_rgba(255,119,0,0.5)] active:scale-95">INITIATE LINK</button>
+                <button onClick={() => setShowConfig(false)} className="w-full bg-transparent text-white/40 font-bold py-2 text-[8px] hover:text-white transition-colors tracking-widest">ABORT MISSION</button>
+              </div>
             </div>
           </div>
         </div>
