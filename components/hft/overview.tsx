@@ -71,6 +71,7 @@ export function Overview() {
   const [changes, setChanges] = useState<Record<string, number | string>>({})
   const [history, setHistory] = useState<Record<string, { value: number }[]>>({})
   const [macroData, setMacroData] = useState<any[]>([])
+  const [sessionId, setSessionId] = useState<string>('--------')
   const initialized = useRef(false)
 
   // Asset configuration
@@ -105,6 +106,7 @@ export function Overview() {
     initialized.current = true
 
     const timer = setInterval(() => setClock(new Date().toLocaleTimeString('en-US', { hour12: false })), 1000)
+    setSessionId(Math.random().toString(36).slice(2, 10).toUpperCase())
 
     // Initial data fetch for all symbols to remove '---'
     const prefetchData = async () => {
@@ -265,7 +267,7 @@ export function Overview() {
               <div className="flex-1" />
               <div className="p-4 bg-[#ff7700]/5 border border-[#ff7700]/10 rounded-xl">
                  <span className="text-[10px] font-mono text-white/40 leading-relaxed block text-center lowercase">
-                    active session: {Math.random().toString(36).slice(2, 10).toUpperCase()}
+                    active session: {sessionId}
                  </span>
               </div>
            </div>

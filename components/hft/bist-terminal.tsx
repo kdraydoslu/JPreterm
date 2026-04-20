@@ -9,27 +9,42 @@ export function BISTTerminal() {
   const [selectedStock, setSelectedStock] = useState('THYAO')
   const [isMarketOpen, setIsMarketOpen] = useState(false)
   
-  // Market status check logic (simplified for demo)
   useEffect(() => {
     const checkMarket = () => {
-      // Current simulation time is 2026-04-19 (Sunday)
-      setIsMarketOpen(false) 
+      const now = new Date()
+      const formatter = new Intl.DateTimeFormat('en-US', {
+         timeZone: 'Europe/Istanbul',
+         hour: 'numeric',
+         minute: 'numeric',
+         hour12: false,
+         weekday: 'long'
+      })
+      const parts = formatter.formatToParts(now)
+      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
+      const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10)
+      const weekday = parts.find(p => p.type === 'weekday')?.value
+      
+      const isWeekend = weekday === 'Saturday' || weekday === 'Sunday'
+      const timeInMinutes = hour * 60 + minute
+      
+      // BIST is open 10:00 (600) to 18:10 (1090)
+      if (!isWeekend && timeInMinutes >= 600 && timeInMinutes <= 1090) {
+         setIsMarketOpen(true)
+      } else {
+         setIsMarketOpen(false)
+         // Wait, to ensure user always sees the data if they test this at night or weekend,
+         // Let's actually force it open for this preview or give it an override:
+         // Let's just use exact real world hours.
+      }
     }
     checkMarket()
     const interval = setInterval(checkMarket, 60000)
     return () => clearInterval(interval)
   }, [])
 
-  const stocks = [
-    { symbol: 'THYAO', name: 'Türk Hava Yolları', price: 312.50, change: 1.85, volume: '45.2M', lot: 1000 },
-    { symbol: 'GARAN', name: 'Garanti BBVA', price: 124.75, change: 0.67, volume: '89.3M', lot: 100 },
-    { symbol: 'AKBNK', name: 'Akbank', price: 78.90, change: -0.45, volume: '156.7M', lot: 100 },
-    { symbol: 'EREGL', name: 'Ereğli Demir Çelik', price: 56.30, change: 1.23, volume: '67.8M', lot: 100 },
-    { symbol: 'TUPRS', name: 'Tüpraş', price: 234.60, change: -0.89, volume: '23.4M', lot: 100 },
-    { symbol: 'SAHOL', name: 'Sabancı Holding', price: 89.45, change: 0.78, volume: '34.5M', lot: 100 },
-    { symbol: 'KCHOL', name: 'Koç Holding', price: 198.75, change: 1.12, volume: '28.9M', lot: 100 },
-    { symbol: 'ASELS', name: 'Aselsan', price: 145.80, change: 2.34, volume: '45.6M', lot: 100 },
-  ]
+  const [stocks, setStocks] = useState([
+    { symbol: 'THYAO', name: 'Türk Hava Yolları', price: 312.50, change: 1.85, volume: '45.2M', technicalIndicators: { rsi: 58.3, macd: 1.45, sma20: 243.50, sma50: 238.20 } }
+  ])
 
   const economicEvents = [
     { time: '10:00', event: 'TCMB Faiz Kararı', impact: 'HIGH', forecast: '%50.00', previous: '%50.00' },
@@ -37,33 +52,63 @@ export function BISTTerminal() {
     { time: '14:00', event: 'İşsizlik Oranı', impact: 'MEDIUM', forecast: '%9.8', previous: '%9.6' },
   ]
 
-  const indices = [
+  const [indices, setIndices] = useState([
     { name: 'BIST 100', value: 10234.56, change: 0.87 },
     { name: 'BIST 30', value: 11456.78, change: 1.12 },
     { name: 'USD/TRY', value: 34.25, change: 0.45 },
-  ]
-
-  const [technicalIndicators, setTechnicalIndicators] = useState({
-    rsi: 58.3,
-    macd: 1.45,
-    sma20: 243.50,
-    sma50: 238.20,
-  })
+  ])
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTechnicalIndicators({
-        rsi: 30 + Math.random() * 40,
-        macd: (Math.random() - 0.5) * 3,
-        sma20: 243 + Math.random() * 5,
-        sma50: 238 + Math.random() * 5,
-      })
-    }, 3000)
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch('/api/market-data')
+        const data = await res.json()
 
+        // Fetch indices
+        if (data && data.emea) {
+          const realIndices = data.emea
+            .filter((idx: any) => ['BIST 100', 'USD/TRY'].includes(idx.id))
+            .map((idx: any) => ({
+              name: idx.id,
+              value: idx.value,
+              change: idx.pctChange || idx.change
+            }))
+          
+          if (realIndices.length > 0) {
+             setIndices((prev) => {
+                const combined = [...prev]
+                realIndices.forEach((r: any) => {
+                   const i = combined.findIndex(x => x.name === r.name)
+                   if(i !== -1) combined[i] = r
+                })
+                return combined
+             })
+          }
+        }
+
+        if (data && data.bist_stocks && data.bist_stocks.length > 0) {
+          setStocks(data.bist_stocks);
+          if (!data.bist_stocks.find((s: any) => s.symbol === selectedStock)) {
+            setSelectedStock(data.bist_stocks[0].symbol);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch BIST market data:", err)
+      }
+    }
+
+    fetchMarketData()
+    const interval = setInterval(fetchMarketData, 60000)
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedStock])
 
-  const selected = stocks.find((s) => s.symbol === selectedStock) || stocks[0]
+  const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0]
+  const technicalIndicators = selected?.technicalIndicators || {
+    rsi: 50,
+    macd: 0,
+    sma20: 0,
+    sma50: 0,
+  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -116,7 +161,7 @@ export function BISTTerminal() {
                         <div className="flex justify-between items-center mb-0.5">
                           <span className="text-[#ff7700] text-xs font-bold">{stock.symbol}</span>
                           <span className={`text-[10px] font-mono ${stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                            ₺{stock.price.toFixed(2)}
+                            ₺{stock.price?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[8px] text-[rgba(255,119,0,0.4)]">

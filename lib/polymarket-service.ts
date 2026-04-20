@@ -72,8 +72,8 @@ class PolymarketService {
 
   async fetchMarkets(category: string = 'all'): Promise<Market[]> {
     try {
-      // Use Gamma API events/markets endpoint for better discovery
-      const url = `https://gamma-api.polymarket.com/markets?active=true&closed=false&order=volume&dir=desc&limit=25`
+      // Use internal proxy to bypass CORS and adblockers
+      const url = `/api/polymarket?category=${encodeURIComponent(category)}`
       
       const response = await fetch(url)
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)

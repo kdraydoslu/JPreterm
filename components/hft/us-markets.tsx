@@ -9,28 +9,39 @@ export function USMarkets() {
   const [selectedStock, setSelectedStock] = useState('AAPL')
   const [isMarketOpen, setIsMarketOpen] = useState(false)
   
-  // Market status check logic (simplified for demo)
   useEffect(() => {
     const checkMarket = () => {
       const now = new Date()
-      // Current simulation time is 2026-04-19 (Sunday)
-      setIsMarketOpen(false) 
+      const formatter = new Intl.DateTimeFormat('en-US', {
+         timeZone: 'America/New_York',
+         hour: 'numeric',
+         minute: 'numeric',
+         hour12: false,
+         weekday: 'long'
+      })
+      const parts = formatter.formatToParts(now)
+      const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
+      const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10)
+      const weekday = parts.find(p => p.type === 'weekday')?.value
+      
+      const isWeekend = weekday === 'Saturday' || weekday === 'Sunday'
+      const timeInMinutes = hour * 60 + minute
+      
+      // US Markets open 09:30 (570) to 16:00 (960) EST
+      if (!isWeekend && timeInMinutes >= 570 && timeInMinutes <= 960) {
+         setIsMarketOpen(true)
+      } else {
+         setIsMarketOpen(false)
+      }
     }
     checkMarket()
     const interval = setInterval(checkMarket, 60000)
     return () => clearInterval(interval)
   }, [])
 
-  const stocks = [
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 234.56, change: 1.23, volume: '52.3M', pe: 31.2, marketCap: '3.6T' },
-    { symbol: 'MSFT', name: 'Microsoft Corp.', price: 445.78, change: 0.87, volume: '23.1M', pe: 37.8, marketCap: '3.3T' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.', price: 178.90, change: -0.45, volume: '18.7M', pe: 26.4, marketCap: '2.2T' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.', price: 198.45, change: 1.56, volume: '45.2M', pe: 58.3, marketCap: '2.1T' },
-    { symbol: 'NVDA', name: 'NVIDIA Corp.', price: 142.34, change: 2.89, volume: '67.8M', pe: 72.5, marketCap: '3.5T' },
-    { symbol: 'TSLA', name: 'Tesla Inc.', price: 345.67, change: -1.12, volume: '89.4M', pe: 68.9, marketCap: '1.1T' },
-    { symbol: 'META', name: 'Meta Platforms', price: 589.23, change: 0.98, volume: '15.6M', pe: 32.1, marketCap: '1.5T' },
-    { symbol: 'JPM', name: 'JPMorgan Chase', price: 223.45, change: 0.34, volume: '8.9M', pe: 12.8, marketCap: '645B' },
-  ]
+  const [stocks, setStocks] = useState([
+    { symbol: 'AAPL', name: 'Apple Inc.', price: 234.56, change: 1.23, volume: '52.3M', technicalIndicators: { rsi: 65, macd: 2, sma20: 175, sma50: 172, sma200: 168 } }
+  ])
 
   const economicEvents = [
     { time: '08:30', event: 'Non-Farm Payrolls', impact: 'HIGH', forecast: '185K', previous: '199K' },
@@ -39,36 +50,59 @@ export function USMarkets() {
     { time: '15:30', event: 'Crude Oil Inventories', impact: 'MEDIUM', forecast: '-2.1M', previous: '-1.5M' },
   ]
 
-  const indices = [
+  const [indices, setIndices] = useState([
     { name: 'S&P 500', value: 5987.37, change: 0.45 },
-    { name: 'Dow Jones', value: 43910.98, change: -0.12 },
+    { name: 'DOW JONES', value: 43910.98, change: -0.12 },
     { name: 'NASDAQ', value: 19218.17, change: 0.89 },
     { name: 'Russell 2000', value: 2285.43, change: 0.23 },
-  ]
-
-  const [technicalIndicators, setTechnicalIndicators] = useState({
-    rsi: 65.4,
-    macd: 2.34,
-    sma20: 175.23,
-    sma50: 172.45,
-    sma200: 168.90,
-  })
+  ])
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTechnicalIndicators({
-        rsi: 30 + Math.random() * 40,
-        macd: (Math.random() - 0.5) * 5,
-        sma20: 175 + Math.random() * 5,
-        sma50: 172 + Math.random() * 5,
-        sma200: 168 + Math.random() * 5,
-      })
-    }, 3000)
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch('/api/market-data')
+        const data = await res.json()
+        
+        if (data && data.americas) {
+          // Map Alpha Vantage data into our indices UI shape
+          const realIndices = data.americas
+            .filter((idx: any) => ['S&P 500', 'DOW JONES', 'NASDAQ'].includes(idx.id))
+            .map((idx: any) => ({
+              name: idx.id,
+              value: idx.value,
+              change: idx.pctChange || idx.change
+            }))
+          
+          if (realIndices.length > 0) {
+            setIndices(realIndices)
+          }
+        }
 
+        if (data && data.us_stocks && data.us_stocks.length > 0) {
+          setStocks(data.us_stocks);
+          // Set selection to the first valid stock if current selection isn't loaded
+          if (!data.us_stocks.find((s: any) => s.symbol === selectedStock)) {
+            setSelectedStock(data.us_stocks[0].symbol);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch real market data:", err)
+      }
+    }
+
+    fetchMarketData()
+    const interval = setInterval(fetchMarketData, 60000) // update every minute
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedStock])
 
-  const selected = stocks.find((s) => s.symbol === selectedStock) || stocks[0]
+  const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0]
+  const technicalIndicators = selected?.technicalIndicators || {
+    rsi: 50,
+    macd: 0,
+    sma20: 0,
+    sma50: 0,
+    sma200: 0,
+  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -118,7 +152,7 @@ export function USMarkets() {
                         <div className="flex justify-between items-center mb-0.5">
                           <span className="text-[#ff7700] text-xs font-bold">{stock.symbol}</span>
                           <span className={`text-[10px] font-mono ${stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                            ${stock.price.toFixed(2)}
+                            ${stock.price?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[8px] text-[rgba(255,119,0,0.4)]">
