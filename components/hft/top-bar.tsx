@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { polymarketService } from '@/lib/polymarket-service'
+import { useWallet } from '@/components/wallet-provider'
 
 export function TopBar() {
+  const { address, isConnected, connect, disconnect, balance } = useWallet()
   const [time, setTime] = useState('--:--:--.---')
   const [pnl, setPnl] = useState(0)
   const [winRate, setWinRate] = useState(0)
@@ -96,9 +98,19 @@ export function TopBar() {
         </div>
       </div>
 
-      <button className="bg-gradient-to-r from-[#ff7700] to-[#00ff9d] text-[#050100] px-2.5 py-1 rounded font-[var(--font-orbitron)] text-[9px] font-bold tracking-[1px] hover:shadow-[0_0_20px_rgba(255,119,0,0.5)] transition-all">
-        CONNECT WALLET
+      <button 
+        onClick={isConnected ? disconnect : connect}
+        className="bg-gradient-to-r from-[#ff7700] to-[#00ff9d] text-[#050100] px-2.5 py-1 rounded font-[var(--font-orbitron)] text-[9px] font-bold tracking-[1px] hover:shadow-[0_0_20px_rgba(255,119,0,0.5)] transition-all"
+      >
+        {isConnected ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : 'CONNECT WALLET'}
       </button>
+
+      {isConnected && balance && (
+        <div className="bg-[rgba(0,255,157,0.1)] border border-[rgba(0,255,157,0.3)] rounded px-2 py-0.5">
+          <div className="text-[7px] text-[rgba(0,255,157,0.6)]">ETH BALANCE</div>
+          <div className="font-mono text-[10px] text-[#00ff9d] font-bold">{balance}</div>
+        </div>
+      )}
 
       <div className="flex items-center gap-1.5">
         <div className="flex flex-col items-center gap-0.5">

@@ -8,6 +8,10 @@ import { MarketGate } from './market-gate'
 export function BISTTerminal() {
   const [selectedStock, setSelectedStock] = useState('THYAO')
   const [isMarketOpen, setIsMarketOpen] = useState(false)
+  const [gainers, setGainers] = useState<any[]>([])
+  const [losers, setLosers] = useState<any[]>([])
+  const [news, setNews] = useState<any[]>([])
+  const [showGainers, setShowGainers] = useState(true)
   
   useEffect(() => {
     const checkMarket = () => {
@@ -61,36 +65,36 @@ export function BISTTerminal() {
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
-        const res = await fetch('/api/market-data')
-        const data = await res.json()
-
-        // Fetch indices
-        if (data && data.emea) {
-          const realIndices = data.emea
-            .filter((idx: any) => ['BIST 100', 'USD/TRY'].includes(idx.id))
-            .map((idx: any) => ({
-              name: idx.id,
-              value: idx.value,
-              change: idx.pctChange || idx.change
-            }))
-          
-          if (realIndices.length > 0) {
-             setIndices((prev) => {
-                const combined = [...prev]
-                realIndices.forEach((r: any) => {
-                   const i = combined.findIndex(x => x.name === r.name)
-                   if(i !== -1) combined[i] = r
-                })
-                return combined
-             })
-          }
+        // BIST verilerini çek
+        const bistRes = await fetch('/api/bist-data')
+        const bistData = await bistRes.json()
+        
+        if (bistData.stocks) {
+          setStocks(bistData.stocks)
+          setGainers(bistData.gainers || [])
+          setLosers(bistData.losers || [])
+        }
+        
+        if (bistData.bist100) {
+          setIndices(prev => {
+            const newIndices = [...prev]
+            const bistIndex = newIndices.findIndex(i => i.name === 'BIST 100')
+            if (bistIndex !== -1) {
+              newIndices[bistIndex] = {
+                name: 'BIST 100',
+                value: bistData.bist100.value,
+                change: bistData.bist100.change
+              }
+            }
+            return newIndices
+          })
         }
 
-        if (data && data.bist_stocks && data.bist_stocks.length > 0) {
-          setStocks(data.bist_stocks);
-          if (!data.bist_stocks.find((s: any) => s.symbol === selectedStock)) {
-            setSelectedStock(data.bist_stocks[0].symbol);
-          }
+        // Haberleri çek
+        const newsRes = await fetch('/api/bist-news')
+        const newsData = await newsRes.json()
+        if (newsData.news) {
+          setNews(newsData.news)
         }
       } catch (err) {
         console.error("Failed to fetch BIST market data:", err)
@@ -100,7 +104,7 @@ export function BISTTerminal() {
     fetchMarketData()
     const interval = setInterval(fetchMarketData, 60000)
     return () => clearInterval(interval)
-  }, [selectedStock])
+  }, [])
 
   const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0]
   const technicalIndicators = selected?.technicalIndicators || {
@@ -140,7 +144,7 @@ export function BISTTerminal() {
               </div>
 
               <div className="grid grid-cols-3 gap-3 flex-1">
-                {/* Column 1: Watchlist */}
+                {/* Column 1: Watchlist + Gainers/Losers */}
                 <div className="border-r border-[rgba(255,119,0,0.1)] flex flex-col overflow-hidden px-1">
                   <div className="text-[9px] text-[#ffcc00] font-[var(--font-orbitron)] mb-2 px-1 flex items-center justify-between">
                     <span>HİSSE TAKİP</span>
@@ -149,7 +153,7 @@ export function BISTTerminal() {
                        <span className="text-[7px] text-[rgba(0,255,157,0.5)]">BİST_CANLI</span>
                     </div>
                   </div>
-                  <div className="space-y-1 overflow-y-auto custom-scrollbar">
+                  <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1">
                     {stocks.map(stock => (
                       <div 
                         key={stock.symbol}
@@ -166,10 +170,55 @@ export function BISTTerminal() {
                         </div>
                         <div className="flex justify-between items-center text-[8px] text-[rgba(255,119,0,0.4)]">
                           <span>{stock.name}</span>
-                          <span>Hacim: {stock.volume}</span>
+                          <span className={stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}>
+                            {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
+                          </span>
                         </div>
                       </div>
                     ))}
+                  </div>
+                  
+                  {/* Günlük Yükselenler/Düşenler */}
+                  <div className="mt-3 pt-3 border-t border-[rgba(255,119,0,0.15)] shrink-0">
+                    <div className="flex gap-2 mb-2">
+                      <button
+                        onClick={() => setShowGainers(true)}
+                        className={`flex-1 text-[8px] font-[var(--font-orbitron)] py-1 rounded transition-all ${
+                          showGainers 
+                            ? 'bg-[rgba(0,255,157,0.2)] text-[#00ff9d] border border-[rgba(0,255,157,0.4)]' 
+                            : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)]'
+                        }`}
+                      >
+                        YÜKSELENLER
+                      </button>
+                      <button
+                        onClick={() => setShowGainers(false)}
+                        className={`flex-1 text-[8px] font-[var(--font-orbitron)] py-1 rounded transition-all ${
+                          !showGainers 
+                            ? 'bg-[rgba(255,34,68,0.2)] text-[#ff2244] border border-[rgba(255,34,68,0.4)]' 
+                            : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)]'
+                        }`}
+                      >
+                        DÜŞENLER
+                      </button>
+                    </div>
+                    <div className="space-y-1 max-h-[120px] overflow-y-auto custom-scrollbar">
+                      {(showGainers ? gainers : losers).map((stock, i) => (
+                        <div 
+                          key={i}
+                          onClick={() => setSelectedStock(stock.symbol)}
+                          className="p-1 rounded bg-[rgba(10,3,0,0.3)] border border-[rgba(255,119,0,0.05)] cursor-pointer hover:bg-[rgba(255,119,0,0.05)] transition-all"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="text-[#ff7700] text-[9px] font-bold">{stock.symbol}</span>
+                            <span className={`text-[9px] font-mono font-bold ${stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
+                              {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
+                            </span>
+                          </div>
+                          <div className="text-[7px] text-[rgba(255,119,0,0.4)]">₺{stock.price.toFixed(2)}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -233,26 +282,52 @@ export function BISTTerminal() {
                    </div>
                 </div>
 
-                {/* Column 3: Calendar & Currency */}
+                {/* Column 3: News & Events */}
                 <div className="flex flex-col overflow-hidden px-1">
-                   <div className="text-[9px] text-[#ff00aa] font-[var(--font-orbitron)] mb-2 px-1">TAKTAK & EKONOMİ</div>
+                   <div className="text-[9px] text-[#ff00aa] font-[var(--font-orbitron)] mb-2 px-1 flex items-center justify-between">
+                     <span>HABERLER & OLAYLAR</span>
+                     <div className="w-1 h-1 rounded-full bg-[#ff2244] animate-pulse" />
+                   </div>
                    <div className="space-y-2 overflow-y-auto custom-scrollbar flex-1">
-                      {economicEvents.map((event, i) => (
-                        <div key={i} className="p-2 border-l border-[rgba(255,119,0,0.3)] bg-[rgba(10,3,0,0.4)] rounded-r">
+                      {news.map((item) => {
+                        const timeAgo = Math.floor((Date.now() - new Date(item.time).getTime()) / 60000)
+                        return (
+                          <div key={item.id} className="p-2 border-l-2 border-[rgba(255,119,0,0.3)] bg-[rgba(10,3,0,0.4)] rounded-r hover:bg-[rgba(255,119,0,0.05)] transition-all cursor-pointer">
+                             <div className="flex justify-between text-[7px] mb-1 font-mono">
+                                <span className="text-[#ff7700]">{item.source}</span>
+                                <span className="text-[rgba(255,119,0,0.5)]">{timeAgo}dk önce</span>
+                             </div>
+                             <div className="text-[10px] text-[rgba(255,238,221,0.9)] mb-1 font-semibold leading-tight">{item.title}</div>
+                             <div className="text-[8px] text-[rgba(255,238,221,0.6)] mb-1 leading-snug">{item.content}</div>
+                             <div className="flex gap-2 items-center">
+                                <span className={`text-[7px] px-1.5 py-0.5 rounded ${
+                                  item.impact === 'HIGH' 
+                                    ? 'bg-[rgba(255,34,68,0.2)] text-[#ff2244] border border-[rgba(255,34,68,0.4)]' 
+                                    : 'bg-[rgba(255,204,0,0.2)] text-[#ffcc00] border border-[rgba(255,204,0,0.4)]'
+                                }`}>
+                                  {item.impact}
+                                </span>
+                                <span className="text-[7px] text-[rgba(255,119,0,0.4)]">{item.category}</span>
+                             </div>
+                          </div>
+                        )
+                      })}
+                   </div>
+                   
+                   <div className="mt-4 pt-4 border-t border-[rgba(255,119,0,0.15)] shrink-0">
+                      <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-2 uppercase tracking-[2px]">Ekonomik Takvim</div>
+                      {economicEvents.slice(0, 2).map((event, i) => (
+                        <div key={i} className="p-1.5 mb-2 border-l border-[rgba(255,119,0,0.3)] bg-[rgba(10,3,0,0.4)] rounded-r">
                            <div className="flex justify-between text-[8px] mb-1 font-mono">
                               <span className="text-[#ff7700]">{event.time}</span>
                               <span className={event.impact === 'HIGH' ? 'text-[#ff2244]' : 'text-[#ffcc00]'}>{event.impact}</span>
                            </div>
-                           <div className="text-[10px] text-[rgba(255,238,221,0.8)] mb-1">{event.event}</div>
-                           <div className="flex gap-2 text-[7px] text-[rgba(255,119,0,0.4)]">
-                              <span>TAHMIN: <span className="text-[rgba(255,119,0,0.7)]">{event.forecast}</span></span>
-                              <span>ÖNCEKI: <span className="text-[rgba(255,119,0,0.7)]">{event.previous}</span></span>
-                           </div>
+                           <div className="text-[9px] text-[rgba(255,238,221,0.8)]">{event.event}</div>
                         </div>
                       ))}
                    </div>
                    
-                   <div className="mt-4 pt-4 border-t border-[rgba(255,119,0,0.15)] shrink-0">
+                   <div className="mt-2 pt-2 border-t border-[rgba(255,119,0,0.15)] shrink-0">
                       <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-2 uppercase tracking-[2px]">Kur Seviyeleri</div>
                       <div className="grid grid-cols-2 gap-2">
                          <div className="p-1.5 bg-[rgba(0,0,0,0.3)] rounded border border-[rgba(0,255,157,0.1)]">

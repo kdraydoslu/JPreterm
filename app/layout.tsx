@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Share_Tech_Mono, Orbitron, Rajdhani } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { BackgroundVideo } from '@/components/background-video'
+import { WalletProvider } from '@/components/wallet-provider'
 import './globals.css'
 
 const shareTechMono = Share_Tech_Mono({
@@ -41,10 +42,12 @@ export default function RootLayout({
       <body
         className={`${shareTechMono.variable} ${orbitron.variable} ${rajdhani.variable} font-mono antialiased`}
       >
-        <BackgroundVideo />
-        <div className="relative z-10">
-          {children}
-        </div>
+        <WalletProvider>
+          <BackgroundVideo />
+          <div className="relative z-10">
+            {children}
+          </div>
+        </WalletProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
