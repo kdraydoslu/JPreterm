@@ -377,7 +377,7 @@ export function JarvisOSDashboard() {
   );
 
   return (
-    <div className="h-screen w-full flex font-sans bg-theme-bg text-theme-text overflow-hidden select-none relative">
+    <div className="h-full w-full flex font-sans bg-theme-bg text-theme-text overflow-hidden select-none relative">
       
       {/* Sidebar */}
       <aside className="w-80 border-r border-theme-border flex flex-col p-10 bg-theme-sidebar shrink-0 overflow-y-auto">
