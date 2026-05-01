@@ -91,6 +91,17 @@ export function Overview() {
     { ticker: 'AMD', name: 'AMD' }
   ], [])
 
+  const bistList = useMemo(() => [
+    { ticker: 'THYAO', name: 'TÜRK HAVA YOLLARI' },
+    { ticker: 'GARAN', name: 'GARANTİ BBVA' },
+    { ticker: 'AKBNK', name: 'AKBANK' },
+    { ticker: 'EREGL', name: 'EREĞLİ DEMİR ÇELİK' },
+    { ticker: 'TUPRS', name: 'TÜPRAŞ' },
+    { ticker: 'SAHOL', name: 'SABANCI HOLDING' },
+    { ticker: 'KCHOL', name: 'KOÇ HOLDING' },
+    { ticker: 'ASELS', name: 'ASELSAN' }
+  ], [])
+
   const marketIndices = useMemo(() => [
     { ticker: 'SPY', name: 'S&P 500' },
     { ticker: 'QQQ', name: 'NASDAQ 100' },
@@ -130,6 +141,19 @@ export function Overview() {
           }
         } catch (e) {}
       }
+
+      // 3. BIST Prefetch
+      try {
+        const bistRes = await fetch('/api/bist-data')
+        const bistData = await bistRes.json()
+        if (bistData.stocks) {
+          bistData.stocks.forEach((s: any) => {
+            setPrices(prev => ({ ...prev, [s.symbol]: s.price }))
+            setChanges(prev => ({ ...prev, [s.symbol]: s.change }))
+            setHistory(prev => ({ ...prev, [s.symbol]: [{ value: s.price * 0.99 }, { value: s.price }] }))
+          })
+        }
+      } catch (e) {}
     }
     prefetchData()
 
@@ -160,7 +184,6 @@ export function Overview() {
       }
     })
 
-    // 5. World Bank Feed
     const fetchMacro = async () => {
       const gdp = await marketDataService.fetchWorldBankIndicator('NY.GDP.MKTP.KD.ZG')
       const inf = await marketDataService.fetchWorldBankIndicator('FP.CPI.TOTL.ZG')
@@ -171,8 +194,28 @@ export function Overview() {
     }
     fetchMacro()
 
+    // 6. BIST Polling
+    const fetchBist = async () => {
+      try {
+        const bistRes = await fetch('/api/bist-data')
+        const bistData = await bistRes.json()
+        if (bistData.stocks) {
+          bistData.stocks.forEach((s: any) => {
+            setPrices(prev => ({ ...prev, [s.symbol]: s.price }))
+            setChanges(prev => ({ ...prev, [s.symbol]: s.change }))
+            setHistory(prev => {
+               const h = prev[s.symbol] || []
+               return { ...prev, [s.symbol]: [...h.slice(-19), { value: s.price }] }
+            })
+          })
+        }
+      } catch (e) {}
+    }
+    const bistInterval = setInterval(fetchBist, 15000)
+
     return () => {
       clearInterval(timer)
+      clearInterval(bistInterval)
       marketDataService.cleanup()
     }
   }, [cryptoList, stockList, marketIndices])
@@ -205,8 +248,16 @@ export function Overview() {
        }
     })
 
-    return { crypto, stocks, indices }
-  }, [prices, changes, history, cryptoList, stockList, marketIndices])
+    const bist = bistList.map(s => ({
+      ticker: s.ticker,
+      name: s.name,
+      price: prices[s.ticker] || '...',
+      change: changes[s.ticker] || '0',
+      history: history[s.ticker] || []
+    }))
+
+    return { crypto, stocks, indices, bist }
+  }, [prices, changes, history, cryptoList, stockList, marketIndices, bistList])
 
   return (
     <div className="h-full bg-black text-[#ff7700] flex flex-col font-sans select-none overflow-hidden p-4 gap-4">
@@ -274,10 +325,11 @@ export function Overview() {
         </div>
 
         {/* Market Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-           <PulseColumn title="Universal Indices / FX" assets={assets.indices} color="#ff7700" />
-           <PulseColumn title="Global Equities" assets={assets.stocks} color="#00ff9d" />
-           <PulseColumn title="Digital Assets Hub" assets={assets.crypto} color="#ff00aa" />
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 overflow-hidden">
+           <PulseColumn title="Universal Indices" assets={assets.indices} color="#ff7700" />
+           <PulseColumn title="Global Equities" assets={assets.stocks} color="#00f0ff" />
+           <PulseColumn title="BIST Equities" assets={assets.bist} color="#ffcc00" />
+           <PulseColumn title="Digital Assets Hub" assets={assets.crypto} color="#00ff9d" />
         </div>
       </div>
 
