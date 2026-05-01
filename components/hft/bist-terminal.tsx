@@ -70,7 +70,18 @@ export function BISTTerminal() {
         const bistData = await bistRes.json()
         
         if (bistData.stocks) {
-          setStocks(bistData.stocks)
+          setStocks(prev => {
+            const newStocks = [...prev]
+            bistData.stocks.forEach((fetchedStock: any) => {
+              const idx = newStocks.findIndex(s => s.symbol === fetchedStock.symbol)
+              if (idx !== -1) {
+                newStocks[idx] = { ...newStocks[idx], ...fetchedStock }
+              } else if (prev.length === 1 && prev[0].symbol === 'THYAO' && newStocks.length === 1) {
+                return bistData.stocks
+              }
+            })
+            return prev.length <= 1 ? bistData.stocks : newStocks
+          })
           setGainers(bistData.gainers || [])
           setLosers(bistData.losers || [])
         }
@@ -106,8 +117,39 @@ export function BISTTerminal() {
     return () => clearInterval(interval)
   }, [])
 
-  const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0]
-  const technicalIndicators = selected?.technicalIndicators || {
+  const [newSymbol, setNewSymbol] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleAddStock = () => {
+    const sym = newSymbol.trim().toUpperCase()
+    if (!sym || stocks.find(s => s.symbol === sym)) return
+    
+    const basePrice = Math.random() * 300 + 50
+    const baseChange = (Math.random() - 0.5) * 5
+    const newStockObj = {
+      symbol: sym,
+      name: sym,
+      price: basePrice,
+      change: baseChange,
+      volume: `${(Math.random() * 50 + 5).toFixed(1)}M`,
+      technicalIndicators: { 
+         rsi: 40 + Math.random() * 40, 
+         macd: (Math.random() - 0.5) * 2, 
+         sma20: basePrice * 0.98, 
+         sma50: basePrice * 0.95 
+      }
+    }
+    
+    setStocks(prev => [newStockObj, ...prev])
+    setNewSymbol('')
+    setIsAdding(false)
+  }
+
+  const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0] || {
+    symbol: '---', name: '---', price: 0, change: 0, volume: '0', 
+    technicalIndicators: { rsi: 50, macd: 0, sma20: 0, sma50: 0, sma200: 0 }
+  }
+  const technicalIndicators = selected.technicalIndicators || {
     rsi: 50,
     macd: 0,
     sma20: 0,
@@ -148,11 +190,29 @@ export function BISTTerminal() {
                 <div className="border-r border-[rgba(255,119,0,0.1)] flex flex-col overflow-hidden px-1">
                   <div className="text-[9px] text-[#ffcc00] font-[var(--font-orbitron)] mb-2 px-1 flex items-center justify-between">
                     <span>HİSSE TAKİP</span>
-                    <div className="flex gap-1">
-                       <div className="w-1 h-1 rounded-full bg-[#00ff9d] animate-pulse" />
-                       <span className="text-[7px] text-[rgba(0,255,157,0.5)]">BİST_CANLI</span>
+                    <div className="flex gap-2 items-center">
+                       <button onClick={() => setIsAdding(!isAdding)} className="text-[#00ff9d] hover:text-white text-[12px] leading-none px-1">+</button>
+                       <div className="flex gap-1 items-center">
+                         <div className="w-1 h-1 rounded-full bg-[#00ff9d] animate-pulse" />
+                         <span className="text-[7px] text-[rgba(0,255,157,0.5)]">BİST_CANLI</span>
+                       </div>
                     </div>
                   </div>
+                  {isAdding && (
+                     <div className="mb-2 px-1 flex gap-1">
+                        <input 
+                           type="text" 
+                           value={newSymbol} 
+                           onChange={e => setNewSymbol(e.target.value.toUpperCase())}
+                           placeholder="SEMBOL..." 
+                           className="flex-1 bg-[rgba(0,0,0,0.5)] border border-[rgba(255,119,0,0.3)] rounded px-2 py-1 text-[10px] text-white font-mono outline-none"
+                           onKeyDown={(e) => {
+                             if (e.key === 'Enter') handleAddStock()
+                           }}
+                        />
+                        <button onClick={handleAddStock} className="px-2 py-1 bg-[#00ff9d]/20 text-[#00ff9d] border border-[#00ff9d]/30 rounded text-[9px] font-bold">EKLE</button>
+                     </div>
+                  )}
                   <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1">
                     {stocks.map(stock => (
                       <div 
@@ -170,9 +230,20 @@ export function BISTTerminal() {
                         </div>
                         <div className="flex justify-between items-center text-[8px] text-[rgba(255,119,0,0.4)]">
                           <span>{stock.name}</span>
-                          <span className={stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}>
-                            {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
-                          </span>
+                          <div className="flex gap-2 items-center">
+                            <span className={stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}>
+                              {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
+                            </span>
+                            <button 
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setStocks(prev => prev.filter(s => s.symbol !== stock.symbol)) 
+                              }} 
+                              className="text-[#ff2244] hover:text-white opacity-50 hover:opacity-100 px-1"
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
