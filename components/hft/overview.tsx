@@ -25,11 +25,11 @@ function PulseColumn({ title, assets, color, onAssetClick }: { title: string; as
         {assets.map((asset, i) => (
           <div key={i} onClick={() => onAssetClick(asset)} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/10 group cursor-pointer">
             <div className="flex flex-col">
-              <span className="text-[13px] font-black text-white group-hover:text-[#ff7700] transition-colors">{asset.ticker}</span>
-              <span className="text-[9px] text-white/40 uppercase truncate w-24 font-bold tracking-tighter">{asset.name}</span>
+              <span className="text-[13px] font-black text-[#ff7700] opacity-80 group-hover:opacity-100 transition-opacity">{asset.ticker}</span>
+              <span className="text-[9px] text-[rgba(255,119,0,0.5)] uppercase truncate w-24 font-bold tracking-tighter">{asset.name}</span>
             </div>
             <div className="flex flex-col items-end min-w-[80px]">
-              <span className="text-[16px] font-mono font-black text-white tracking-tighter tabular-nums">
+              <span className="text-[16px] font-mono font-black text-[rgba(255,238,221,0.9)] tracking-tighter tabular-nums">
                 {typeof asset.price === 'number' ? asset.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : asset.price}
               </span>
               <span className={`text-[10px] font-mono font-black px-1 rounded ${String(asset.change).startsWith('-') ? 'text-[#ff3333] bg-[#ff3333]/5' : 'text-[#00ff9d] bg-[#00ff9d]/5'}`}>
@@ -68,18 +68,18 @@ function AssetDetailSheet({ asset, onClose }: { asset: Asset | null; onClose: ()
         {/* Header */}
         <div className="px-8 pb-6 border-b border-white/5 flex justify-between items-end">
           <div className="flex gap-6 items-end">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner">
+            <div className="w-16 h-16 rounded-2xl bg-[#ff7700]/5 border border-[#ff7700]/20 flex items-center justify-center shadow-inner">
                <span className="text-2xl font-black text-[#ff7700]">{currentAsset.ticker?.slice(0, 2)}</span>
             </div>
             <div>
-              <h2 className="text-4xl font-black text-white tracking-tighter mb-1">{currentAsset.ticker}</h2>
-              <span className="text-sm text-white/50 font-mono tracking-widest uppercase">{currentAsset.name}</span>
+              <h2 className="text-4xl font-black text-[#ff7700] tracking-tighter mb-1">{currentAsset.ticker}</h2>
+              <span className="text-sm text-[rgba(255,119,0,0.5)] font-mono tracking-widest uppercase">{currentAsset.name}</span>
             </div>
           </div>
           <div className="flex items-center gap-8">
             <div className="flex flex-col items-end">
-              <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1 font-bold">Last Price</span>
-              <span className="text-4xl font-mono font-black text-white tracking-tighter">
+              <span className="text-[10px] text-[rgba(255,119,0,0.5)] uppercase tracking-[0.2em] mb-1 font-bold">Last Price</span>
+              <span className="text-4xl font-mono font-black text-[rgba(255,238,221,0.9)] tracking-tighter">
                 ${typeof currentAsset.price === 'number' ? currentAsset.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : currentAsset.price}
               </span>
             </div>
@@ -121,14 +121,14 @@ function AssetDetailSheet({ asset, onClose }: { asset: Asset | null; onClose: ()
               <span className="text-[10px] text-[#00f0ff] tracking-[0.3em] font-black uppercase mb-4 block flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" /> Asset Profile
               </span>
-              <p className="text-xs text-white/60 leading-relaxed font-sans text-justify">
-                <strong className="text-white/90">{currentAsset.ticker}</strong> is currently positioned as a high-liquidity asset within its primary market sector.
+              <p className="text-xs text-[rgba(255,238,221,0.7)] leading-relaxed font-sans text-justify">
+                <strong className="text-[#ff7700]">{currentAsset.ticker}</strong> is currently positioned as a high-liquidity asset within its primary market sector.
                 Institutional volume indicates steady accumulation. Financials are robust with stable quarterly growth metrics.
               </p>
             </div>
             
             <div className="bg-[#050100] rounded-3xl border border-white/5 p-6 shadow-xl">
-              <span className="text-[10px] text-white/30 tracking-[0.3em] font-black uppercase mb-5 block">Balance Sheet / Fundamentals</span>
+              <span className="text-[10px] text-[rgba(255,119,0,0.5)] tracking-[0.3em] font-black uppercase mb-5 block">Balance Sheet / Fundamentals</span>
               <div className="space-y-4">
                 {[
                   { l: 'Market Cap', v: `$${(Math.random() * 2000 + 10).toLocaleString(undefined, { maximumFractionDigits: 1 })}B` },
@@ -137,9 +137,9 @@ function AssetDetailSheet({ asset, onClose }: { asset: Asset | null; onClose: ()
                   { l: 'Div. Yield', v: `${(Math.random() * 6).toFixed(2)}%` },
                   { l: 'ROE', v: `${(Math.random() * 30 + 5).toFixed(1)}%` },
                 ].map((s, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-[10px] text-white/50 uppercase font-bold tracking-wider">{s.l}</span>
-                    <span className="text-[13px] text-white font-mono font-black">{s.v}</span>
+                  <div key={i} className="flex justify-between items-center border-b border-[rgba(255,119,0,0.1)] pb-3">
+                    <span className="text-[10px] text-[rgba(255,119,0,0.6)] uppercase font-bold tracking-wider">{s.l}</span>
+                    <span className="text-[13px] text-[rgba(255,238,221,0.9)] font-mono font-black">{s.v}</span>
                   </div>
                 ))}
               </div>
@@ -353,15 +353,15 @@ export function Overview() {
   return (
     <div className="h-full bg-black text-[#ff7700] flex flex-col font-sans select-none overflow-hidden p-4 gap-4">
       {/* Universal Ticker Bar */}
-      <div className="h-10 border border-white/10 rounded-xl flex items-center bg-white/[0.02] overflow-hidden shrink-0 shadow-lg">
+      <div className="h-10 border border-[rgba(255,119,0,0.1)] rounded-xl flex items-center bg-[rgba(255,119,0,0.02)] overflow-hidden shrink-0 shadow-lg">
          <div className="flex items-center gap-12 animate-[marquee_100s_linear_infinite] whitespace-nowrap px-6">
             {[...assets.crypto, ...assets.stocks].concat([...assets.crypto, ...assets.stocks]).map((a, i) => (
               <div key={i} className="flex items-center gap-3">
-                 <span className="text-[12px] font-black text-white/80">{a.ticker}</span>
+                 <span className="text-[12px] font-black text-[#ff7700] opacity-80">{a.ticker}</span>
                  <span className={`text-[12px] font-mono font-black ${String(a.change).startsWith('-') ? 'text-[#ff3333]' : 'text-[#00ff9d]'}`}>
                     ${typeof a.price === 'number' ? a.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : a.price}
                  </span>
-                 <span className="text-white/10 mx-3 opacity-30">/</span>
+                 <span className="text-[#ff7700] mx-3 opacity-20">/</span>
               </div>
             ))}
          </div>
@@ -380,8 +380,8 @@ export function Overview() {
               <div className="space-y-6">
                  {macroData.map((m, i) => (
                    <div key={i} className="flex flex-col">
-                      <span className="text-[9px] text-white/30 font-black uppercase tracking-tight mb-1">{m.label} ({m.year})</span>
-                      <span className="text-3xl font-mono font-black text-white tracking-tighter">{m.value}</span>
+                      <span className="text-[9px] text-[rgba(255,119,0,0.5)] font-black uppercase tracking-tight mb-1">{m.label} ({m.year})</span>
+                      <span className="text-3xl font-mono font-black text-[rgba(255,238,221,0.9)] tracking-tighter">{m.value}</span>
                    </div>
                  ))}
               </div>
@@ -407,13 +407,13 @@ export function Overview() {
                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${s.impact === 'HIGH' ? 'bg-[#ff2244]/20 text-[#ff2244] border border-[#ff2244]/30' : 'bg-[#ffcc00]/20 text-[#ffcc00] border border-[#ffcc00]/30'}`}>
                             {s.impact}
                           </span>
-                          <span className="text-[10px] text-white/40 font-bold uppercase">{s.time} {s.country}</span>
+                          <span className="text-[10px] text-[rgba(255,119,0,0.6)] font-bold uppercase">{s.time} {s.country}</span>
                         </div>
                         <span className="text-[11px] text-[#00ff9d] font-mono font-black tracking-widest">{s.forecast}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                         <span className="text-[10px] text-white/80 font-medium truncate w-32">{s.event}</span>
-                         <span className="text-[8px] text-white/30 font-mono">PREV: {s.prev}</span>
+                         <span className="text-[10px] text-[rgba(255,238,221,0.9)] font-medium truncate w-32">{s.event}</span>
+                         <span className="text-[8px] text-[rgba(255,119,0,0.4)] font-mono">PREV: {s.prev}</span>
                       </div>
                    </div>
                  ))}
@@ -431,16 +431,16 @@ export function Overview() {
       </div>
 
       {/* Console Bar */}
-      <div className="h-12 bg-[#080402] border border-white/10 rounded-xl flex items-center px-8 justify-between shrink-0 shadow-2xl">
+      <div className="h-12 bg-[#080402] border border-[rgba(255,119,0,0.1)] rounded-xl flex items-center px-8 justify-between shrink-0 shadow-2xl">
          <div className="flex items-center gap-10">
             <div className="flex items-center gap-3">
                <div className="h-2 w-2 rounded-full bg-[#00ff9d] shadow-[0_0_10px_#00ff9d]" />
-               <span className="text-[11px] font-black text-white/90 tracking-[0.2em] uppercase">Hyperlink Synchronization: Finalized</span>
+               <span className="text-[11px] font-black text-[#ff7700] tracking-[0.2em] uppercase">Hyperlink Synchronization: Finalized</span>
             </div>
-            <div className="h-5 w-[1px] bg-white/10" />
-            <span className="text-[10px] font-mono text-white/30 truncate max-w-[400px]">SRC: FINNHUB_WSS + BINANCE_GLOBAL_TICKER + WB_IND_API</span>
+            <div className="h-5 w-[1px] bg-[rgba(255,119,0,0.2)]" />
+            <span className="text-[10px] font-mono text-[rgba(255,119,0,0.4)] truncate max-w-[400px]">SRC: FINNHUB_WSS + BINANCE_GLOBAL_TICKER + WB_IND_API</span>
          </div>
-         <div className="text-lg font-mono font-black text-white tracking-[0.3em] tabular-nums">{clock}</div>
+         <div className="text-lg font-mono font-black text-[#ff7700] tracking-[0.3em] tabular-nums">{clock}</div>
       </div>
 
       {/* Asset Detail Sheet */}
