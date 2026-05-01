@@ -78,6 +78,16 @@
   --color-red: var(--red);
   --color-orange: var(--orange);
   --color-yellow: var(--yellow);
+
+  --color-theme-bg: #050100;
+  --color-theme-sidebar: #0a0300;
+  --color-theme-card: rgba(255, 119, 0, 0.05);
+  --color-theme-border: rgba(255, 119, 0, 0.3);
+  --color-theme-accent: #ff7700;
+  --color-theme-text: #ffeedd;
+  --color-theme-dim: rgba(255, 170, 0, 0.6);
+  --color-theme-green: #ffaa00; 
+  --color-theme-red: #ff3300; 
 }
 
 @layer base {
@@ -91,6 +101,15 @@
     @apply bg-background text-foreground;
     font-size: 11px;
     overflow: hidden;
+  }
+}
+
+@layer utilities {
+  .glow-text {
+    text-shadow: 0 0 10px var(--color-theme-accent), 0 0 20px var(--color-theme-accent);
+  }
+  .glow-border {
+    box-shadow: inset 0 0 15px rgba(255, 119, 0, 0.1), 0 0 15px rgba(255, 119, 0, 0.1);
   }
 }
 

@@ -9,6 +9,7 @@ import { BISTTerminal } from '@/components/hft/bist-terminal'
 import { PredictionMarkets } from '@/components/hft/prediction-markets'
 import { Overview } from '@/components/hft/overview'
 import { Portfolio } from '@/components/hft/portfolio'
+import { JarvisOSDashboard } from '@/components/hft/jarvis-os'
 import { BottomBar } from '@/components/hft/bottom-bar'
 
 export default function ClientTerminal() {
@@ -37,6 +38,7 @@ export default function ClientTerminal() {
         {activeTab === 3 && <USMarkets />}
         {activeTab === 4 && <BISTTerminal />}
         {activeTab === 5 && <PredictionMarkets />}
+        {activeTab === 6 && <JarvisOSDashboard />}
         
         {/* Bottom Bar - visible on all pages */}
         <div className="absolute bottom-0 left-0 right-0 z-10">

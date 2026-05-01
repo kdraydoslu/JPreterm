@@ -1,6 +1,6 @@
 'use client'
 
-const TABS = ['Overview', 'Portfolio', 'Crypto HFT', 'US Markets', 'BIST Terminal', 'Prediction Markets']
+const TABS = ['Overview', 'Portfolio', 'Crypto HFT', 'US Markets', 'BIST Terminal', 'Prediction Markets', 'Jarvis OS']
 
 interface TabBarProps {
   activeTab: number
