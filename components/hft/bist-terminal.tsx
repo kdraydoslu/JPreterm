@@ -120,29 +120,32 @@ export function BISTTerminal() {
   const [newSymbol, setNewSymbol] = useState('')
   const [isAdding, setIsAdding] = useState(false)
 
-  const handleAddStock = () => {
+  const handleAddStock = async () => {
     const sym = newSymbol.trim().toUpperCase()
     if (!sym || stocks.find(s => s.symbol === sym)) return
     
-    const basePrice = Math.random() * 300 + 50
-    const baseChange = (Math.random() - 0.5) * 5
-    const newStockObj = {
+    // Add optimistic placeholder
+    const optimisticStock = {
       symbol: sym,
       name: sym,
-      price: basePrice,
-      change: baseChange,
-      volume: `${(Math.random() * 50 + 5).toFixed(1)}M`,
-      technicalIndicators: { 
-         rsi: 40 + Math.random() * 40, 
-         macd: (Math.random() - 0.5) * 2, 
-         sma20: basePrice * 0.98, 
-         sma50: basePrice * 0.95 
-      }
+      price: 0,
+      change: 0,
+      volume: '0M',
+      technicalIndicators: { rsi: 50, macd: 0, sma20: 0, sma50: 0, sma200: 0 }
     }
-    
-    setStocks(prev => [newStockObj, ...prev])
+    setStocks(prev => [optimisticStock, ...prev])
     setNewSymbol('')
     setIsAdding(false)
+
+    try {
+      const res = await fetch(`/api/bist-quote?symbol=${sym}`)
+      if (res.ok) {
+        const data = await res.json()
+        setStocks(prev => prev.map(s => s.symbol === sym ? { ...s, ...data } : s))
+      }
+    } catch (e) {
+      console.error("Failed to fetch custom BIST stock:", e)
+    }
   }
 
   const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0] || {
