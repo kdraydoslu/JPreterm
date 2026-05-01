@@ -251,49 +251,6 @@ export function BISTTerminal() {
                       </div>
                     ))}
                   </div>
-                  
-                  {/* Günlük Yükselenler/Düşenler */}
-                  <div className="mt-3 pt-3 border-t border-[rgba(255,119,0,0.15)] shrink-0">
-                    <div className="flex gap-2 mb-2">
-                      <button
-                        onClick={() => setShowGainers(true)}
-                        className={`flex-1 text-[8px] font-[var(--font-orbitron)] py-1 rounded transition-all ${
-                          showGainers 
-                            ? 'bg-[rgba(0,255,157,0.2)] text-[#00ff9d] border border-[rgba(0,255,157,0.4)]' 
-                            : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)]'
-                        }`}
-                      >
-                        YÜKSELENLER
-                      </button>
-                      <button
-                        onClick={() => setShowGainers(false)}
-                        className={`flex-1 text-[8px] font-[var(--font-orbitron)] py-1 rounded transition-all ${
-                          !showGainers 
-                            ? 'bg-[rgba(255,34,68,0.2)] text-[#ff2244] border border-[rgba(255,34,68,0.4)]' 
-                            : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)]'
-                        }`}
-                      >
-                        DÜŞENLER
-                      </button>
-                    </div>
-                    <div className="space-y-1 max-h-[120px] overflow-y-auto custom-scrollbar">
-                      {(showGainers ? gainers : losers).map((stock, i) => (
-                        <div 
-                          key={i}
-                          onClick={() => setSelectedStock(stock.symbol)}
-                          className="p-1 rounded bg-[rgba(10,3,0,0.3)] border border-[rgba(255,119,0,0.05)] cursor-pointer hover:bg-[rgba(255,119,0,0.05)] transition-all"
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className="text-[#ff7700] text-[9px] font-bold">{stock.symbol}</span>
-                            <span className={`text-[9px] font-mono font-bold ${stock.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
-                              {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
-                            </span>
-                          </div>
-                          <div className="text-[7px] text-[rgba(255,119,0,0.4)]">₺{stock.price.toFixed(2)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 {/* Column 2: Market Depth & Technicals */}
@@ -420,9 +377,114 @@ export function BISTTerminal() {
           </MarketGate>
         </div>
 
-        {/* Right Sidebar */}
-        <div className="w-[210px] border-l border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <RightSidebar />
+        {/* Right Sidebar - BIST Specific */}
+        <div className="w-[210px] border-l border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col overflow-hidden">
+          
+          {/* Top Section: Gainers/Losers replacing Signal Feed */}
+          <div className="flex-1 flex flex-col overflow-hidden p-2">
+             <div className="text-[10px] font-bold text-[#ff7700] tracking-[1.5px] font-[var(--font-orbitron)] mb-2 px-1 flex items-center justify-between">
+               <span>PİYASA RADARI</span>
+               <div className="w-1.5 h-1.5 rounded-full bg-[#ff2244] animate-pulse" />
+             </div>
+             
+             <div className="flex gap-2 mb-2 px-1">
+               <button
+                 onClick={() => setShowGainers(true)}
+                 className={`flex-1 text-[9px] font-[var(--font-orbitron)] py-1.5 rounded transition-all ${
+                   showGainers 
+                     ? 'bg-[rgba(0,255,157,0.2)] text-[#00ff9d] border border-[rgba(0,255,157,0.4)] shadow-[0_0_8px_rgba(0,255,157,0.3)]' 
+                     : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)] hover:bg-[rgba(0,255,157,0.1)] hover:text-[#00ff9d]'
+                 }`}
+               >
+                 YÜKSELENLER
+               </button>
+               <button
+                 onClick={() => setShowGainers(false)}
+                 className={`flex-1 text-[9px] font-[var(--font-orbitron)] py-1.5 rounded transition-all ${
+                   !showGainers 
+                     ? 'bg-[rgba(255,34,68,0.2)] text-[#ff2244] border border-[rgba(255,34,68,0.4)] shadow-[0_0_8px_rgba(255,34,68,0.3)]' 
+                     : 'bg-[rgba(255,119,0,0.05)] text-[rgba(255,119,0,0.5)] border border-[rgba(255,119,0,0.1)] hover:bg-[rgba(255,34,68,0.1)] hover:text-[#ff2244]'
+                 }`}
+               >
+                 DÜŞENLER
+               </button>
+             </div>
+             
+             <div className="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 px-1 pb-2">
+               {(showGainers ? gainers : losers).map((stock, i) => (
+                 <div 
+                   key={i}
+                   onClick={() => setSelectedStock(stock.symbol)}
+                   className="p-1.5 rounded bg-[rgba(10,3,0,0.5)] border border-[rgba(255,119,0,0.1)] cursor-pointer hover:bg-[rgba(255,119,0,0.1)] hover:border-[#ff7700] transition-all flex flex-col gap-1"
+                 >
+                   <div className="flex justify-between items-center">
+                     <span className="text-[#ff7700] text-[11px] font-bold tracking-wider">{stock.symbol}</span>
+                     <span className={`text-[10px] font-mono font-bold px-1 rounded ${stock.change >= 0 ? 'bg-[#00ff9d]/10 text-[#00ff9d]' : 'bg-[#ff2244]/10 text-[#ff2244]'}`}>
+                       {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
+                     </span>
+                   </div>
+                   <div className="flex justify-between items-center text-[8px] text-[rgba(255,119,0,0.5)]">
+                     <span>Vol: {stock.volume || '1.2M'}</span>
+                     <span className="font-mono">₺{stock.price.toFixed(2)}</span>
+                   </div>
+                 </div>
+               ))}
+             </div>
+          </div>
+
+          {/* Capital Allocation - BIST Specific */}
+          <div className="border-t border-[rgba(255,119,0,0.15)] px-3 py-2 shrink-0 bg-[rgba(10,3,0,0.4)]">
+            <div className="flex items-center justify-between pb-1 mb-2">
+              <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ff7700] tracking-[1.5px] [text-shadow:0_0_6px_rgba(255,119,0,0.5)]">
+                CAPITAL ALLOCATION
+              </span>
+              <span className="bg-[rgba(255,34,68,0.15)] border border-[rgba(255,34,68,0.5)] text-[#ff2244] text-[8px] px-1.5 py-0.5 rounded-sm tracking-[2px] font-[var(--font-orbitron)] animate-[liveBlink_1s_step-end_infinite]">
+                LIVE
+              </span>
+            </div>
+            {[
+              { label: 'BANKACILIK', width: 65, gradient: 'from-[#ff7700] to-[#00ff9d]' },
+              { label: 'SANAYİ', width: 25, gradient: 'from-[#ff00aa] to-[#ff6600]' },
+              { label: 'NAKİT/RİSK', width: 10, gradient: 'from-[#ff2244] to-[#ff6600]' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center justify-between mb-1.5">
+                <span className="text-[9px] text-[rgba(255,119,0,0.6)] font-semibold tracking-wide w-[55px]">{item.label}</span>
+                <div className="flex-1 mx-2 h-[6px] bg-[rgba(255,119,0,0.1)] rounded-sm overflow-hidden">
+                  <div className={`h-full rounded-sm bg-gradient-to-r ${item.gradient} relative overflow-hidden`} style={{ width: `${item.width}%` }}>
+                     <div className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]" style={{ transform: 'skewX(-20deg)' }} />
+                  </div>
+                </div>
+                <span className="text-[10px] text-[#ff7700] font-mono font-bold w-[25px] text-right">{item.width}%</span>
+              </div>
+            ))}
+          </div>
+          
+          {/* HFT Metrics */}
+          <div className="border-t border-[rgba(255,119,0,0.15)] px-3 py-2 shrink-0 bg-[rgba(10,3,0,0.6)]">
+            <div className="font-[var(--font-orbitron)] text-[9px] font-bold text-[#ff7700] tracking-[1.5px] mb-1.5 flex justify-between">
+              <span>BIST METRICS</span>
+              <span className="text-[#00ff9d] animate-pulse">●</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span className="text-[9px] text-[rgba(255,119,0,0.5)]">Emir/Sn</span>
+              <span className="font-mono text-[10px] text-[#00ff9d] font-bold">142/sn</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span className="text-[9px] text-[rgba(255,119,0,0.5)]">Gecikme (BIST)</span>
+              <span className="font-mono text-[10px] text-[#00ff9d] font-bold">12.4 ms</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-[9px] text-[rgba(255,119,0,0.5)]">Açığa Satış %</span>
+              <span className="font-mono text-[10px] text-[#ff2244] font-bold">18.5%</span>
+            </div>
+            
+            <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-1 uppercase tracking-widest">Derinlik Yoğunluğu</div>
+            <div className="flex gap-[1px] h-3">
+               {[...Array(15)].map((_, i) => (
+                 <div key={i} className={`flex-1 rounded-[1px] ${Math.random() > 0.5 ? 'bg-[#00ff9d]' : 'bg-[#ff2244]'}`} style={{ opacity: Math.random() * 0.5 + 0.3 }} />
+               ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
