@@ -1,9 +1,157 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LeftSidebar } from './left-sidebar'
-import { RightSidebar } from './right-sidebar'
 import { MarketGate } from './market-gate'
+
+// ─── BIST Terminal Left Sidebar ─────────────────────────────────────────────
+const BISTLeftSidebar = () => {
+  const [usdTry, setUsdTry] = useState(34.25)
+  const [eurTry, setEurTry] = useState(37.10)
+  const [bist100, setBist100] = useState(10234.56)
+  const [bist100Change, setBist100Change] = useState(0.87)
+  const [breadth, setBreadth] = useState({ advance: 342, decline: 158, unchanged: 8 })
+  const [viopVolat, setViopVolat] = useState(24.8)
+  const [yabanci, setYabanci] = useState({ net: -1250, kumulatif: 8450 }) // Milyon TL
+
+  const sectors = [
+    { name: 'Bankacılık', index: 'XBANK', change: 1.24, weight: 38 },
+    { name: 'Holding', index: 'XHOLD', change: 0.55, weight: 14 },
+    { name: 'Sanayi', index: 'XUSIN', change: -0.32, weight: 12 },
+    { name: 'Mali', index: 'XFINK', change: 0.88, weight: 10 },
+    { name: 'Enerji', index: 'XELKT', change: 2.10, weight: 8 },
+    { name: 'Teknoloji', index: 'XBLSM', change: 3.45, weight: 7 },
+    { name: 'Gayrimenkul', index: 'XGMYO', change: -0.65, weight: 6 },
+    { name: 'Kimya', index: 'XKMYA', change: 0.21, weight: 5 },
+  ]
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setUsdTry(prev => Math.max(30, Math.min(40, prev + (Math.random() - 0.5) * 0.05)))
+      setEurTry(prev => Math.max(33, Math.min(44, prev + (Math.random() - 0.5) * 0.06)))
+      setBist100(prev => Math.max(9000, prev + (Math.random() - 0.48) * 15))
+      setBist100Change(prev => Math.max(-3, Math.min(3, prev + (Math.random() - 0.5) * 0.1)))
+      setBreadth({
+        advance: 250 + Math.floor(Math.random() * 200),
+        decline: 80 + Math.floor(Math.random() * 200),
+        unchanged: 2 + Math.floor(Math.random() * 15),
+      })
+      setViopVolat(prev => Math.max(15, Math.min(45, prev + (Math.random() - 0.5) * 0.5)))
+      setYabanci(prev => ({
+        net: prev.net + (Math.random() - 0.5) * 50,
+        kumulatif: prev.kumulatif + (Math.random() - 0.48) * 20,
+      }))
+    }, 1800)
+    return () => clearInterval(iv)
+  }, [])
+
+  return (
+    <aside className="flex flex-col h-full overflow-hidden bg-[rgba(10,3,0,0.7)] border-r border-[rgba(255,119,0,0.15)]">
+      {/* BIST 100 Özet */}
+      <div className="px-2 py-2 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1">BIST 100</div>
+        <div className="flex items-end justify-between">
+          <span className="font-[var(--font-orbitron)] text-[20px] font-black text-[#00ff9d]"
+            style={{ textShadow: '0 0 10px rgba(0,255,157,0.6)' }}>
+            {bist100.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
+          </span>
+          <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded ${bist100Change >= 0 ? 'text-[#00ff9d] bg-[rgba(0,255,157,0.1)] border border-[rgba(0,255,157,0.3)]' : 'text-[#ff2244] bg-[rgba(255,34,68,0.1)] border border-[rgba(255,34,68,0.3)]'}`}>
+            {bist100Change > 0 ? '+' : ''}{bist100Change.toFixed(2)}%
+          </span>
+        </div>
+      </div>
+
+      {/* TCMB Faiz + Döviz */}
+      <div className="px-2 py-1.5 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1.5">TCMB FAİZ & DÖVİZ</div>
+        <div className="grid grid-cols-3 gap-1">
+          <div className="p-1.5 bg-[rgba(255,0,170,0.06)] border border-[rgba(255,0,170,0.2)] rounded text-center">
+            <div className="text-[7px] text-[rgba(255,119,0,0.5)] mb-0.5">POL.FAİZ</div>
+            <div className="text-[13px] font-black text-[#ff00aa] font-[var(--font-orbitron)]">%50</div>
+          </div>
+          <div className="p-1.5 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,119,0,0.1)] rounded text-center">
+            <div className="text-[7px] text-[rgba(255,119,0,0.5)] mb-0.5">USD/TRY</div>
+            <div className="text-[11px] font-bold text-[#ffcc00] font-mono">₺{usdTry.toFixed(2)}</div>
+          </div>
+          <div className="p-1.5 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,119,0,0.1)] rounded text-center">
+            <div className="text-[7px] text-[rgba(255,119,0,0.5)] mb-0.5">EUR/TRY</div>
+            <div className="text-[11px] font-bold text-[#ffcc00] font-mono">₺{eurTry.toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Piyasa Genişliği (BIST Breadth) */}
+      <div className="px-2 py-1.5 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1.5">PİYASA GENİŞLİĞİ</div>
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">↑ Yükselen</span>
+            <span className="text-[#00ff9d] font-mono">{breadth.advance}</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">↓ Düşen</span>
+            <span className="text-[#ff2244] font-mono">{breadth.decline}</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">— Değişmeyen</span>
+            <span className="text-[#ffcc00] font-mono">{breadth.unchanged}</span>
+          </div>
+          <div className="h-2 bg-[rgba(255,119,0,0.05)] rounded-full overflow-hidden flex mt-1">
+            <div className="h-full bg-[#00ff9d]" style={{ width: `${(breadth.advance / (breadth.advance + breadth.decline + breadth.unchanged)) * 100}%` }}/>
+            <div className="h-full bg-[#ff2244]" style={{ width: `${(breadth.decline / (breadth.advance + breadth.decline + breadth.unchanged)) * 100}%` }}/>
+            <div className="h-full bg-[#ffcc00] flex-1"/>
+          </div>
+        </div>
+      </div>
+
+      {/* VIOP Volatilite + Yabancı Akışı */}
+      <div className="px-2 py-1.5 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1.5">VIOP & YABANCI</div>
+        <div className="grid grid-cols-2 gap-1">
+          <div className="p-1.5 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,204,0,0.15)] rounded">
+            <div className="text-[7px] text-[rgba(255,119,0,0.5)] mb-0.5">VİOP VOL</div>
+            <div className={`text-[13px] font-bold font-mono ${viopVolat > 30 ? 'text-[#ff2244]' : viopVolat > 22 ? 'text-[#ffcc00]' : 'text-[#00ff9d]'}`}>
+              {viopVolat.toFixed(1)}
+            </div>
+            <div className={`text-[7px] mt-0.5 ${viopVolat > 30 ? 'text-[#ff2244]' : viopVolat > 22 ? 'text-[#ffcc00]' : 'text-[#00ff9d]'}`}>
+              {viopVolat > 30 ? 'YÜKSEK' : viopVolat > 22 ? 'NORMAL' : 'DÜŞÜK'}
+            </div>
+          </div>
+          <div className="p-1.5 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,119,0,0.15)] rounded">
+            <div className="text-[7px] text-[rgba(255,119,0,0.5)] mb-0.5">YAB. NET (₺M)</div>
+            <div className={`text-[12px] font-bold font-mono ${yabanci.net >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
+              {yabanci.net > 0 ? '+' : ''}{yabanci.net.toFixed(0)}
+            </div>
+            <div className="text-[7px] text-[rgba(255,119,0,0.4)] mt-0.5">
+              KÜM: +{yabanci.kumulatif.toFixed(0)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sektör Ağırlıkları */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="px-2 py-1 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+          <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ff00aa] tracking-[1px]">SEKTÖR PERFORMANSI</span>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {sectors.map(s => (
+            <div key={s.index} className="flex items-center justify-between px-2 py-1 border-b border-[rgba(255,119,0,0.04)] hover:bg-[rgba(255,119,0,0.05)] cursor-pointer">
+              <div className="flex-1 min-w-0">
+                <div className="text-[#ff7700] text-[9px] font-bold">{s.index}</div>
+                <div className="text-[7px] text-[rgba(255,119,0,0.4)] truncate">{s.name} · %{s.weight}</div>
+              </div>
+              <div className="text-right ml-1">
+                <span className={`text-[10px] font-mono font-bold ${s.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
+                  {s.change > 0 ? '+' : ''}{s.change}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  )
+}
 
 export function BISTTerminal() {
   const [selectedStock, setSelectedStock] = useState('THYAO')
@@ -165,7 +313,7 @@ export function BISTTerminal() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         <div className="w-[200px] border-r border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <LeftSidebar />
+          <BISTLeftSidebar />
         </div>
 
         {/* Center Area */}
