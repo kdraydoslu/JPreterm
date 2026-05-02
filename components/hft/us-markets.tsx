@@ -1,9 +1,256 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LeftSidebar } from './left-sidebar'
-import { RightSidebar } from './right-sidebar'
 import { MarketGate } from './market-gate'
+
+// ─── US Markets Left Sidebar ────────────────────────────────────────────────
+const USLeftSidebar = () => {
+  const sectors = [
+    { name: 'Technology', etf: 'XLK', change: 1.42, hot: true },
+    { name: 'Financials', etf: 'XLF', change: 0.87, hot: false },
+    { name: 'Healthcare', etf: 'XLV', change: -0.34, hot: false },
+    { name: 'Energy', etf: 'XLE', change: -1.12, hot: false },
+    { name: 'Consumer Disc', etf: 'XLY', change: 2.15, hot: true },
+    { name: 'Industrials', etf: 'XLI', change: 0.55, hot: false },
+    { name: 'Real Estate', etf: 'XLRE', change: -0.78, hot: false },
+    { name: 'Utilities', etf: 'XLU', change: 0.12, hot: false },
+    { name: 'Materials', etf: 'XLB', change: 0.33, hot: false },
+    { name: 'Comm. Services', etf: 'XLC', change: 1.88, hot: true },
+    { name: 'Cons. Staples', etf: 'XLP', change: -0.21, hot: false },
+  ]
+
+  const [breadth, setBreadth] = useState({ advance: 287, decline: 213, unchanged: 12 })
+  const [fearGreed, setFearGreed] = useState(62)
+  const [vix, setVix] = useState(18.45)
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setBreadth({
+        advance: 200 + Math.floor(Math.random() * 200),
+        decline: 100 + Math.floor(Math.random() * 200),
+        unchanged: 5 + Math.floor(Math.random() * 20),
+      })
+      setFearGreed(prev => Math.max(10, Math.min(90, prev + (Math.random() - 0.5) * 2)))
+      setVix(prev => Math.max(10, Math.min(40, prev + (Math.random() - 0.5) * 0.3)))
+    }, 2000)
+    return () => clearInterval(iv)
+  }, [])
+
+  const fgColor = fearGreed > 75 ? '#00ff9d' : fearGreed > 55 ? '#ffcc00' : fearGreed > 35 ? '#ff7700' : '#ff2244'
+  const fgLabel = fearGreed > 75 ? 'GREED' : fearGreed > 55 ? 'NEUTRAL' : fearGreed > 35 ? 'FEAR' : 'EXT.FEAR'
+
+  return (
+    <aside className="flex flex-col h-full overflow-hidden bg-[rgba(10,3,0,0.7)] border-r border-[rgba(255,119,0,0.15)]">
+      {/* Fear & Greed */}
+      <div className="px-2 py-2 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1">FEAR & GREED INDEX</div>
+        <div className="flex items-center gap-3">
+          <div className="relative w-12 h-12 shrink-0">
+            <svg viewBox="0 0 44 44" className="w-full h-full -rotate-90">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,119,0,0.1)" strokeWidth="4"/>
+              <circle cx="22" cy="22" r="18" fill="none" stroke={fgColor} strokeWidth="4"
+                strokeDasharray={`${fearGreed * 1.131} 113.1`} strokeLinecap="round"
+                style={{ filter: `drop-shadow(0 0 4px ${fgColor})` }}/>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[11px] font-bold font-mono" style={{ color: fgColor }}>{Math.round(fearGreed)}</span>
+            </div>
+          </div>
+          <div>
+            <div className="font-[var(--font-orbitron)] text-[10px] font-bold" style={{ color: fgColor }}>{fgLabel}</div>
+            <div className="text-[8px] text-[rgba(255,119,0,0.4)] mt-0.5">CNN Money Index</div>
+          </div>
+        </div>
+      </div>
+
+      {/* VIX */}
+      <div className="px-2 py-1.5 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1">VIX VOLATILITY</div>
+        <div className="flex justify-between items-center">
+          <span className="font-[var(--font-orbitron)] text-[20px] font-black text-[#ffcc00]" style={{ textShadow: '0 0 10px rgba(255,204,0,0.6)' }}>
+            {vix.toFixed(2)}
+          </span>
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${vix > 25 ? 'border-[#ff2244] text-[#ff2244] bg-[rgba(255,34,68,0.1)]' : 'border-[#00ff9d] text-[#00ff9d] bg-[rgba(0,255,157,0.1)]'}`}>
+            {vix > 25 ? 'HIGH VOL' : vix > 18 ? 'STABLE' : 'LOW VOL'}
+          </span>
+        </div>
+      </div>
+
+      {/* Market Breadth */}
+      <div className="px-2 py-1.5 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1.5">NYSE BREADTH</div>
+        <div className="space-y-1">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">↑ Advancing</span>
+            <span className="text-[#00ff9d] font-mono">{breadth.advance}</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">↓ Declining</span>
+            <span className="text-[#ff2244] font-mono">{breadth.decline}</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-[rgba(255,119,0,0.5)]">— Unchanged</span>
+            <span className="text-[#ffcc00] font-mono">{breadth.unchanged}</span>
+          </div>
+          <div className="h-2 bg-[rgba(255,119,0,0.05)] rounded-full overflow-hidden mt-1 flex">
+            <div className="h-full bg-[#00ff9d]" style={{ width: `${(breadth.advance / (breadth.advance + breadth.decline + breadth.unchanged)) * 100}%` }}/>
+            <div className="h-full bg-[#ff2244]" style={{ width: `${(breadth.decline / (breadth.advance + breadth.decline + breadth.unchanged)) * 100}%` }}/>
+            <div className="h-full bg-[#ffcc00] flex-1"/>
+          </div>
+        </div>
+      </div>
+
+      {/* Sector Performance */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="px-2 py-1 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+          <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ff00aa] tracking-[1px]">SECTOR PERFORMANCE</span>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {sectors.map(s => (
+            <div key={s.etf} className="flex items-center justify-between px-2 py-1 border-b border-[rgba(255,119,0,0.04)] hover:bg-[rgba(255,119,0,0.05)] cursor-pointer">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-[#ff7700] text-[9px] font-bold">{s.etf}</span>
+                  {s.hot && <span className="text-[6px] text-[#ff00aa] font-[var(--font-orbitron)] animate-[liveBlink_1s_step-end_infinite]">●</span>}
+                </div>
+                <div className="text-[8px] text-[rgba(255,119,0,0.4)] truncate">{s.name}</div>
+              </div>
+              <div className="text-right">
+                <span className={`text-[10px] font-mono font-bold ${s.change >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>
+                  {s.change > 0 ? '+' : ''}{s.change}%
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+// ─── US Markets Right Sidebar ───────────────────────────────────────────────
+const USRightSidebar = () => {
+  const [fedRate, setFedRate] = useState(5.25)
+  const [nextCutProb, setNextCutProb] = useState(68)
+  const [darkPool, setDarkPool] = useState([
+    { symbol: 'AAPL', level: 218.50, volume: '12.4M', type: 'SUPPORT' },
+    { symbol: 'NVDA', level: 875.00, volume: '8.2M', type: 'RESISTANCE' },
+    { symbol: 'TSLA', level: 245.00, volume: '5.1M', type: 'SUPPORT' },
+    { symbol: 'MSFT', level: 415.00, volume: '6.8M', type: 'RESISTANCE' },
+    { symbol: 'SPY',  level: 595.00, volume: '22.1M', type: 'SUPPORT' },
+  ])
+  const [optionsFlow, setOptionsFlow] = useState([
+    { ticker: 'SPY', type: 'CALL', strike: 600, expiry: '05/17', premium: '$2.4M', sentiment: 'BULL' },
+    { ticker: 'QQQ', type: 'CALL', strike: 510, expiry: '05/17', premium: '$1.8M', sentiment: 'BULL' },
+    { ticker: 'NVDA', type: 'PUT', strike: 850, expiry: '05/10', premium: '$3.1M', sentiment: 'BEAR' },
+    { ticker: 'AAPL', type: 'CALL', strike: 220, expiry: '05/24', premium: '$1.2M', sentiment: 'BULL' },
+    { ticker: 'IWM', type: 'PUT', strike: 195, expiry: '05/17', premium: '$0.9M', sentiment: 'BEAR' },
+  ])
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setNextCutProb(prev => Math.max(30, Math.min(90, prev + (Math.random() - 0.5) * 1.5)))
+      setDarkPool(prev => prev.map(d => ({
+        ...d, level: d.level * (1 + (Math.random() - 0.5) * 0.001)
+      })))
+    }, 2000)
+    return () => clearInterval(iv)
+  }, [])
+
+  const earnings = [
+    { co: 'AAPL', date: 'May 08', est: '$1.57', icon: '🍎' },
+    { co: 'NVDA', date: 'May 22', est: '$5.80', icon: '🟩' },
+    { co: 'MSFT', date: 'May 07', est: '$2.90', icon: '🪟' },
+    { co: 'AMZN', date: 'May 01', est: '$1.24', icon: '📦' },
+  ]
+
+  return (
+    <aside className="flex flex-col h-full overflow-hidden bg-[rgba(10,3,0,0.7)] border-l border-[rgba(255,119,0,0.15)]">
+      {/* Fed Watch */}
+      <div className="px-2 py-2 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="text-[9px] text-[rgba(255,119,0,0.5)] tracking-[2px] font-[var(--font-orbitron)] mb-1">FED WATCH TOOL</div>
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <div className="text-[8px] text-[rgba(255,119,0,0.4)]">Current Rate</div>
+            <div className="font-[var(--font-orbitron)] text-[18px] font-black text-[#ff00aa]" style={{ textShadow: '0 0 8px rgba(255,0,170,0.6)' }}>
+              {fedRate}%
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[8px] text-[rgba(255,119,0,0.4)]">Next Cut Prob</div>
+            <div className="font-[var(--font-orbitron)] text-[18px] font-black text-[#00ff9d]">
+              {Math.round(nextCutProb)}%
+            </div>
+          </div>
+        </div>
+        <div className="h-1.5 bg-[rgba(255,119,0,0.05)] rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-[#ff00aa] to-[#00ff9d] transition-all duration-700" style={{ width: `${nextCutProb}%` }}/>
+        </div>
+        <div className="flex justify-between text-[8px] text-[rgba(255,119,0,0.3)] mt-0.5">
+          <span>No Cut</span><span>CME FedFund Futures</span><span>Cut</span>
+        </div>
+      </div>
+
+      {/* Options Flow */}
+      <div className="border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="px-2 py-1 flex items-center justify-between">
+          <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ffcc00] tracking-[1px]">OPTIONS FLOW</span>
+          <span className="text-[6px] text-[#ff2244] font-[var(--font-orbitron)] animate-[liveBlink_1s_step-end_infinite]">● LIVE</span>
+        </div>
+        <div className="space-y-0.5 px-1 pb-1">
+          {optionsFlow.map((o, i) => (
+            <div key={i} className={`flex items-center justify-between px-1.5 py-1 rounded text-[9px] border ${o.type === 'CALL' ? 'border-[rgba(0,255,157,0.15)] bg-[rgba(0,255,157,0.04)]' : 'border-[rgba(255,34,68,0.15)] bg-[rgba(255,34,68,0.04)]'}`}>
+              <span className="text-[#ff7700] font-bold w-9">{o.ticker}</span>
+              <span className={`font-bold w-8 ${o.type === 'CALL' ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>{o.type}</span>
+              <span className="text-[rgba(255,255,255,0.5)]">${o.strike}</span>
+              <span className="text-[#ffcc00]">{o.premium}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dark Pool Levels */}
+      <div className="border-b border-[rgba(255,119,0,0.15)] shrink-0">
+        <div className="px-2 py-1">
+          <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ff00aa] tracking-[1px]">DARK POOL LEVELS</span>
+        </div>
+        <div className="space-y-0.5 px-1 pb-1">
+          {darkPool.map((d, i) => (
+            <div key={i} className="flex items-center justify-between px-1.5 py-1 rounded border border-[rgba(255,119,0,0.08)] bg-[rgba(0,0,0,0.2)]">
+              <span className="text-[#ff7700] font-bold text-[9px] w-10">{d.symbol}</span>
+              <span className="text-white font-mono text-[9px]">${d.level.toFixed(2)}</span>
+              <span className={`text-[8px] font-bold ${d.type === 'SUPPORT' ? 'text-[#00ff9d]' : 'text-[#ff2244]'}`}>{d.type}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Earnings Calendar */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="px-2 py-1 border-b border-[rgba(255,119,0,0.15)] shrink-0">
+          <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#ffcc00] tracking-[1px]">EARNINGS CALENDAR</span>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-1 py-1 space-y-1">
+          {earnings.map((e, i) => (
+            <div key={i} className="p-1.5 border border-[rgba(255,204,0,0.1)] bg-[rgba(0,0,0,0.3)] rounded flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[12px]">{e.icon}</span>
+                <div>
+                  <div className="text-[#ffcc00] text-[10px] font-bold">{e.co}</div>
+                  <div className="text-[8px] text-[rgba(255,119,0,0.4)]">{e.date}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[8px] text-[rgba(255,119,0,0.4)]">EPS Est.</div>
+                <div className="text-[10px] text-[#00ff9d] font-mono">{e.est}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  )
+}
 
 export function USMarkets() {
   const [selectedStock, setSelectedStock] = useState('AAPL')
@@ -161,7 +408,7 @@ export function USMarkets() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         <div className="w-[200px] border-r border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <LeftSidebar />
+          <USLeftSidebar />
         </div>
 
         {/* Center Area */}
@@ -324,7 +571,7 @@ export function USMarkets() {
 
         {/* Right Sidebar */}
         <div className="w-[210px] border-l border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <RightSidebar />
+          <USRightSidebar />
         </div>
       </div>
     </div>
