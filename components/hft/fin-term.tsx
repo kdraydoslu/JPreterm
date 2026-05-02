@@ -1,9 +1,91 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LeftSidebar } from './left-sidebar'
-import { RightSidebar } from './right-sidebar'
+// Specialized sidebars for FinTerm
 import { marketDataService } from '@/lib/market-data'
+
+const FinLeftSidebar = () => {
+  const funds = [
+    { symbol: 'MAC', name: 'Marmara Hisse', daily: 1.24, monthly: 8.42 },
+    { symbol: 'NNF', name: 'Hedef Hisse', daily: -0.45, monthly: 6.21 },
+    { symbol: 'TI3', name: 'İş Portföy Robotik', daily: 2.15, monthly: 12.54 },
+    { symbol: 'IPB', name: 'İstanbul Değişken', daily: 0.82, monthly: 4.15 },
+    { symbol: 'YAS', name: 'Yapı Kredi Hisse', daily: 1.12, monthly: 7.34 },
+    { symbol: 'TTA', name: 'İş Portföy Altın', daily: 0.45, monthly: 5.20 },
+  ]
+  return (
+    <div className="flex flex-col h-full p-2">
+      <div className="text-[10px] text-[#ffcc00] font-[var(--font-orbitron)] mb-3 border-b border-[rgba(255,119,0,0.2)] pb-1">YATIRIM FONLARI</div>
+      <div className="flex flex-col gap-2 overflow-y-auto custom-scrollbar">
+        {funds.map(f => (
+          <div key={f.symbol} className="p-2 border border-[rgba(255,119,0,0.1)] bg-[rgba(0,0,0,0.3)] hover:bg-[rgba(255,119,0,0.1)] rounded cursor-pointer transition-all">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[#ff7700] text-xs font-bold">{f.symbol}</span>
+              <span className="text-[8px] text-[rgba(255,119,0,0.5)] truncate ml-2">{f.name}</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-mono">
+              <span className="text-[rgba(255,119,0,0.6)]">Günlük:</span>
+              <span className={f.daily >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}>{f.daily > 0 ? '+' : ''}{f.daily}%</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-mono">
+              <span className="text-[rgba(255,119,0,0.6)]">Aylık:</span>
+              <span className={f.monthly >= 0 ? 'text-[#00ff9d]' : 'text-[#ff2244]'}>{f.monthly > 0 ? '+' : ''}{f.monthly}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const FinRightSidebar = () => {
+  const bonds = [
+    { title: 'TR 2Y Tahvil', yield: 42.50, change: -0.15 },
+    { title: 'TR 10Y Tahvil', yield: 28.40, change: 0.05 },
+    { title: 'US 10Y Treasury', yield: 4.45, change: 0.02 },
+    { title: 'Repo (O/N)', yield: 50.00, change: 0.00 },
+  ]
+  const eurobonds = [
+    { title: 'TR 2030 (USD)', price: 98.50, yield: 7.20 },
+    { title: 'TR 2036 (USD)', price: 102.10, yield: 7.45 },
+    { title: 'TR 2025 (EUR)', price: 100.20, yield: 5.80 },
+  ]
+  return (
+    <div className="flex flex-col h-full p-2">
+      <div className="text-[10px] text-[#00ff9d] font-[var(--font-orbitron)] mb-3 border-b border-[rgba(0,255,157,0.2)] pb-1">TAHVİL & REPO</div>
+      <div className="flex flex-col gap-2 mb-4">
+        {bonds.map(b => (
+          <div key={b.title} className="p-2 border border-[rgba(0,255,157,0.1)] bg-[rgba(0,0,0,0.3)] rounded">
+            <div className="text-[#00ff9d] text-[10px] font-bold mb-1">{b.title}</div>
+            <div className="flex justify-between text-[12px] font-mono">
+              <span className="text-white">%{b.yield.toFixed(2)}</span>
+              <span className={b.change >= 0 ? (b.change === 0 ? 'text-gray-400' : 'text-[#ff2244]') : 'text-[#00ff9d]'}>
+                {b.change > 0 ? '+' : ''}{b.change.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-[10px] text-[#ffcc00] font-[var(--font-orbitron)] mb-3 border-b border-[rgba(255,204,0,0.2)] pb-1">EUROBOND</div>
+      <div className="flex flex-col gap-2">
+        {eurobonds.map(e => (
+          <div key={e.title} className="p-2 border border-[rgba(255,204,0,0.1)] bg-[rgba(0,0,0,0.3)] rounded">
+            <div className="text-[#ffcc00] text-[10px] font-bold mb-1">{e.title}</div>
+            <div className="flex justify-between text-[10px] font-mono mb-0.5">
+              <span className="text-[rgba(255,255,255,0.6)]">Fiyat:</span>
+              <span className="text-white">{e.title.includes('EUR') ? '€' : '$'}{e.price.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-[10px] font-mono">
+              <span className="text-[rgba(255,255,255,0.6)]">Getiri:</span>
+              <span className="text-[#00ff9d]">%{e.yield.toFixed(2)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function FinTerm() {
   const [macroData, setMacroData] = useState<{
@@ -154,7 +236,7 @@ export function FinTerm() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
         <div className="w-[200px] border-r border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <LeftSidebar />
+          <FinLeftSidebar />
         </div>
 
         {/* Center Area */}
@@ -251,7 +333,7 @@ export function FinTerm() {
 
         {/* Right Sidebar */}
         <div className="w-[210px] border-l border-[rgba(255,119,0,0.15)] bg-[rgba(10,3,0,0.7)] flex flex-col">
-          <RightSidebar />
+          <FinRightSidebar />
         </div>
       </div>
     </div>
