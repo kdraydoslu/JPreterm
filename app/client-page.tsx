@@ -9,6 +9,7 @@ import { BISTTerminal } from '@/components/hft/bist-terminal'
 import { PredictionMarkets } from '@/components/hft/prediction-markets'
 import { Overview } from '@/components/hft/overview'
 import { Portfolio } from '@/components/hft/portfolio'
+import { FinTerm } from '@/components/hft/fin-term'
 import { JarvisOSDashboard } from '@/components/hft/jarvis-os'
 import { BottomBar } from '@/components/hft/bottom-bar'
 
@@ -34,11 +35,12 @@ export default function ClientTerminal() {
       <div className="flex-1 overflow-hidden relative">
         {activeTab === 0 && <Overview />}
         {activeTab === 1 && <Portfolio />}
-        {activeTab === 2 && <CryptoHFT />}
-        {activeTab === 3 && <USMarkets />}
-        {activeTab === 4 && <BISTTerminal />}
-        {activeTab === 5 && <PredictionMarkets />}
-        {activeTab === 6 && <JarvisOSDashboard />}
+        {activeTab === 2 && <FinTerm />}
+        {activeTab === 3 && <CryptoHFT />}
+        {activeTab === 4 && <USMarkets />}
+        {activeTab === 5 && <BISTTerminal />}
+        {activeTab === 6 && <PredictionMarkets />}
+        {activeTab === 7 && <JarvisOSDashboard />}
         
         {/* Bottom Bar - visible on all pages */}
         <div className="absolute bottom-0 left-0 right-0 z-10">
