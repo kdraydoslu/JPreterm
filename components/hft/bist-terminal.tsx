@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { MarketGate } from './market-gate'
+import { BISTAnalysisView } from './bist-analysis'
 
 // ─── BIST Terminal Left Sidebar ─────────────────────────────────────────────
 const BISTLeftSidebar = () => {
@@ -160,6 +161,7 @@ export function BISTTerminal() {
   const [losers, setLosers] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([])
   const [showGainers, setShowGainers] = useState(true)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analysis'>('dashboard')
   
   useEffect(() => {
     const checkMarket = () => {
@@ -321,9 +323,25 @@ export function BISTTerminal() {
           <MarketGate isOpen={isMarketOpen} nextOpening="Pazartesi 10:00 TRT">
             <div className="h-full flex flex-col p-2 overflow-auto custom-scrollbar">
               <div className="flex items-center justify-between mb-4 border-b border-[rgba(255,119,0,0.15)] pb-2 shrink-0">
-                <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#00ff9d] tracking-[1.5px] [text-shadow:0_0_8px_rgba(0,255,157,0.3)]">
-                  BIST TERMINAL V3.0
-                </span>
+                <div className="flex items-center gap-6">
+                  <span className="font-[var(--font-orbitron)] text-[10px] font-bold text-[#00ff9d] tracking-[1.5px] [text-shadow:0_0_8px_rgba(0,255,157,0.3)]">
+                    BIST TERMINAL V3.0
+                  </span>
+                  <div className="flex bg-[rgba(255,119,0,0.05)] p-0.5 rounded border border-[rgba(255,119,0,0.1)]">
+                    <button 
+                      onClick={() => setActiveTab('dashboard')}
+                      className={`px-3 py-1 text-[9px] font-bold font-[var(--font-orbitron)] rounded transition-all ${activeTab === 'dashboard' ? 'bg-[#ff7700] text-black shadow-[0_0_10px_rgba(255,119,0,0.4)]' : 'text-[rgba(255,119,0,0.5)] hover:text-[#ff7700]'}`}
+                    >
+                      DASHBOARD
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('analysis')}
+                      className={`px-3 py-1 text-[9px] font-bold font-[var(--font-orbitron)] rounded transition-all ${activeTab === 'analysis' ? 'bg-[#ff7700] text-black shadow-[0_0_10px_rgba(255,119,0,0.4)]' : 'text-[rgba(255,119,0,0.5)] hover:text-[#ff7700]'}`}
+                    >
+                      ANALİZ (AI)
+                    </button>
+                  </div>
+                </div>
                 <div className="flex gap-4">
                   {indices.map(idx => (
                     <div key={idx.name} className="flex gap-2 text-[9px] font-mono">
@@ -336,7 +354,8 @@ export function BISTTerminal() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 flex-1">
+              {activeTab === 'dashboard' ? (
+                <div className="grid grid-cols-3 gap-3 flex-1">
                 {/* Column 1: Watchlist + Gainers/Losers */}
                 <div className="border-r border-[rgba(255,119,0,0.1)] flex flex-col overflow-hidden px-1">
                   <div className="text-[9px] text-[#ffcc00] font-[var(--font-orbitron)] mb-2 px-1 flex items-center justify-between">
@@ -518,9 +537,16 @@ export function BISTTerminal() {
                             <div className="text-[12px] font-bold text-[#ff2244]">1.0845</div>
                          </div>
                       </div>
-                   </div>
-                </div>
-              </div>
+                    </div>
+                 </div>
+               </div>
+              ) : (
+                <BISTAnalysisView 
+                  stocks={stocks} 
+                  selectedTicker={selectedStock} 
+                  onSelectTicker={setSelectedStock} 
+                />
+              )}
             </div>
           </MarketGate>
         </div>
