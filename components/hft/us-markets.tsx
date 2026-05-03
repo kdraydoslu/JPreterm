@@ -287,7 +287,36 @@ export function USMarkets() {
   }, [])
 
   const [stocks, setStocks] = useState([
-    { symbol: 'AAPL', name: 'Apple Inc.', price: 234.56, change: 1.23, volume: '52.3M', technicalIndicators: { rsi: 65, macd: 2, sma20: 175, sma50: 172, sma200: 168 } }
+    { "symbol": "AAPL", "name": "Apple Inc.", "price": 234.56, "change": 1.23, "volume": "52.3M", "technicalIndicators": { "rsi": 65, "macd": 2, "sma20": 175, "sma50": 172, "sma200": 168 } },
+    { "symbol": "MSFT", "name": "Microsoft Corp.", "price": 412.30, "change": 0.85, "volume": "24.1M", "technicalIndicators": { "rsi": 58, "macd": 1.5, "sma20": 405, "sma50": 398, "sma200": 385 } },
+    { "symbol": "NVDA", "name": "NVIDIA Corp.", "price": 895.10, "change": 2.45, "volume": "85.6M", "technicalIndicators": { "rsi": 72, "macd": 4.2, "sma20": 850, "sma50": 780, "sma200": 650 } },
+    { "symbol": "AMZN", "name": "Amazon.com Inc.", "price": 185.40, "change": 1.12, "volume": "35.2M", "technicalIndicators": { "rsi": 61, "macd": 1.8, "sma20": 178, "sma50": 170, "sma200": 155 } },
+    { "symbol": "GOOGL", "name": "Alphabet Inc.", "price": 168.20, "change": 0.95, "volume": "22.8M", "technicalIndicators": { "rsi": 55, "macd": 0.8, "sma20": 162, "sma50": 155, "sma200": 145 } },
+    { "symbol": "META", "name": "Meta Platforms Inc.", "price": 485.60, "change": 1.55, "volume": "18.4M", "technicalIndicators": { "rsi": 63, "macd": 2.5, "sma20": 470, "sma50": 450, "sma200": 410 } },
+    { "symbol": "TSLA", "name": "Tesla Inc.", "price": 175.30, "change": -2.15, "volume": "110.2M", "technicalIndicators": { "rsi": 38, "macd": -1.2, "sma20": 185, "sma50": 195, "sma200": 210 } },
+    { "symbol": "AVGO", "name": "Broadcom Inc.", "price": 1345.20, "change": 1.88, "volume": "4.2M", "technicalIndicators": { "rsi": 68, "macd": 5.5, "sma20": 1280, "sma50": 1200, "sma200": 1050 } },
+    { "symbol": "NFLX", "name": "Netflix Inc.", "price": 610.40, "change": 0.75, "volume": "5.8M", "technicalIndicators": { "rsi": 59, "macd": 1.2, "sma20": 595, "sma50": 570, "sma200": 520 } },
+    { "symbol": "AMD", "name": "Advanced Micro Devices", "price": 162.80, "change": 1.45, "volume": "62.1M", "technicalIndicators": { "rsi": 54, "macd": 0.5, "sma20": 158, "sma50": 165, "sma200": 140 } },
+    { "symbol": "COST", "name": "Costco Wholesale", "price": 725.30, "change": 0.65, "volume": "3.1M", "technicalIndicators": { "rsi": 57, "macd": 1.1, "sma20": 710, "sma50": 685, "sma200": 620 } },
+    { "symbol": "CRM", "name": "Salesforce Inc.", "price": 278.40, "change": -0.45, "volume": "6.2M", "technicalIndicators": { "rsi": 48, "macd": -0.2, "sma20": 285, "sma50": 290, "sma200": 265 } },
+    { "symbol": "ADBE", "name": "Adobe Inc.", "price": 475.20, "change": -1.15, "volume": "4.8M", "technicalIndicators": { "rsi": 42, "macd": -0.8, "sma20": 490, "sma50": 510, "sma200": 480 } },
+    { "symbol": "V", "name": "Visa Inc.", "price": 275.60, "change": 0.42, "volume": "7.5M", "technicalIndicators": { "rsi": 52, "macd": 0.5, "sma20": 272, "sma50": 268, "sma200": 255 } },
+    { "symbol": "MA", "name": "Mastercard Inc.", "price": 455.80, "change": 0.35, "volume": "4.2M", "technicalIndicators": { "rsi": 50, "macd": 0.4, "sma20": 450, "sma50": 445, "sma200": 420 } },
+    { "symbol": "JPM", "name": "JPMorgan Chase & Co.", "price": 195.40, "change": 0.88, "volume": "12.4M", "technicalIndicators": { "rsi": 56, "macd": 1.2, "sma20": 190, "sma50": 185, "sma200": 170 } },
+    { "symbol": "BAC", "name": "Bank of America", "price": 38.20, "change": 0.55, "volume": "42.1M", "technicalIndicators": { "rsi": 53, "macd": 0.3, "sma20": 37.5, "sma50": 36.8, "sma200": 34.5 } },
+    { "symbol": "WFC", "name": "Wells Fargo & Co.", "price": 60.15, "change": 1.25, "volume": "22.4M", "technicalIndicators": { "rsi": 62, "macd": 0.8, "sma20": 58, "sma50": 56, "sma200": 52 } },
+    { "symbol": "MS", "name": "Morgan Stanley", "price": 94.30, "change": 0.45, "volume": "8.2M", "technicalIndicators": { "rsi": 51, "macd": 0.2, "sma20": 92, "sma50": 90, "sma200": 85 } },
+    { "symbol": "GS", "name": "Goldman Sachs Group", "price": 425.60, "change": 1.15, "volume": "3.5M", "technicalIndicators": { "rsi": 59, "macd": 2.1, "sma20": 415, "sma50": 405, "sma200": 380 } },
+    { "symbol": "UNH", "name": "UnitedHealth Group", "price": 525.40, "change": -0.25, "volume": "4.8M", "technicalIndicators": { "rsi": 49, "macd": 0.1, "sma20": 520, "sma50": 515, "sma200": 490 } },
+    { "symbol": "LLY", "name": "Eli Lilly and Co.", "price": 785.20, "change": 1.42, "volume": "3.2M", "technicalIndicators": { "rsi": 66, "macd": 3.5, "sma20": 760, "sma50": 730, "sma200": 650 } },
+    { "symbol": "JNJ", "name": "Johnson & Johnson", "price": 148.50, "change": -0.15, "volume": "15.4M", "technicalIndicators": { "rsi": 45, "macd": -0.2, "sma20": 152, "sma50": 155, "sma200": 158 } },
+    { "symbol": "PG", "name": "Procter & Gamble", "price": 162.30, "change": 0.22, "volume": "8.5M", "technicalIndicators": { "rsi": 52, "macd": 0.3, "sma20": 160, "sma50": 158, "sma200": 152 } },
+    { "symbol": "HD", "name": "Home Depot Inc.", "price": 345.80, "change": 0.55, "volume": "5.2M", "technicalIndicators": { "rsi": 54, "macd": 0.6, "sma20": 340, "sma50": 335, "sma200": 320 } },
+    { "symbol": "CVX", "name": "Chevron Corp.", "price": 162.40, "change": -0.85, "volume": "10.4M", "technicalIndicators": { "rsi": 44, "macd": -0.4, "sma20": 165, "sma50": 168, "sma200": 160 } },
+    { "symbol": "XOM", "name": "Exxon Mobil Corp.", "price": 121.20, "change": -1.12, "volume": "18.5M", "technicalIndicators": { "rsi": 42, "macd": -0.6, "sma20": 125, "sma50": 128, "sma200": 118 } },
+    { "symbol": "DIS", "name": "Walt Disney Co.", "price": 112.50, "change": 0.35, "volume": "12.8M", "technicalIndicators": { "rsi": 51, "macd": 0.2, "sma20": 110, "sma50": 108, "sma200": 102 } },
+    { "symbol": "NKE", "name": "NIKE Inc.", "price": 92.40, "change": -0.75, "volume": "10.2M", "technicalIndicators": { "rsi": 43, "macd": -0.3, "sma20": 95, "sma50": 98, "sma200": 105 } },
+    { "symbol": "BA", "name": "Boeing Co.", "price": 178.60, "change": -1.45, "volume": "8.4M", "technicalIndicators": { "rsi": 39, "macd": -0.8, "sma20": 185, "sma50": 195, "sma200": 210 } }
   ])
 
   const economicEvents = [
