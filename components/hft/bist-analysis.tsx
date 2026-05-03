@@ -176,9 +176,11 @@ export function BISTAnalysisView({ stocks, selectedTicker, onSelectTicker }: BIS
 
             {/* Final Decision */}
             <div className="mt-8 p-6 bg-gradient-to-br from-[rgba(0,255,157,0.1)] to-[rgba(0,0,0,0.4)] border border-[rgba(0,255,157,0.2)] rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="text-[10px] font-bold text-[rgba(0,255,157,0.6)] font-[var(--font-orbitron)] tracking-[4px] mb-2 uppercase">Yatırım Karar Matrisi</div>
-                <div className="text-3xl font-black text-white font-[var(--font-orbitron)] flex items-center gap-3">
+              <div className="flex items-center gap-8">
+                <div className="text-[11px] font-bold text-[rgba(0,255,157,0.8)] font-[var(--font-orbitron)] tracking-[4px] uppercase border-r border-[rgba(0,255,157,0.2)] pr-8 py-2">
+                  YATIRIM KARAR MATRİSİ
+                </div>
+                <div className="text-4xl font-black text-white font-[var(--font-orbitron)] flex items-center gap-4 [text-shadow:0_0_20px_rgba(255,255,255,0.2)]">
                   {selectedAnalysis.decisionEmoji}
                 </div>
               </div>
