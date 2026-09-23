@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { polymarketService } from '@/lib/polymarket-service'
 import { useWallet } from '@/components/wallet-provider'
 
-export function TopBar() {
+export function TopBar({ onOpenOverview }: { onOpenOverview?: () => void } = {}) {
   const { address, isConnected, connect, disconnect, balance } = useWallet()
   const [time, setTime] = useState('--:--:--.---')
   const [pnl, setPnl] = useState(0)
@@ -76,6 +76,18 @@ export function TopBar() {
       </div>
 
       <div className="flex-1" />
+
+      {/* Genel Veri Modülü (Top Bar Overview Button) */}
+      {onOpenOverview && (
+        <button
+          onClick={onOpenOverview}
+          className="bg-[rgba(255,119,0,0.12)] hover:bg-[rgba(255,119,0,0.25)] border border-[#ff7700]/50 text-[#ff7700] px-2.5 py-1 rounded font-[var(--font-orbitron)] text-[9px] font-black tracking-[1px] shadow-[var(--glow-orange)] transition-all flex items-center gap-1.5 cursor-pointer mr-1.5"
+          title="Tüm Kripto, BIST ve Global Piyasa Verilerini Aç"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00ff9d] animate-ping" />
+          <span>GENEL VERİ MODÜLÜ</span>
+        </button>
+      )}
 
       {/* Portfolio Summary */}
       <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded px-2.5 py-0.5 mr-2">
