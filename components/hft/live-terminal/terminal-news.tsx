@@ -6,8 +6,6 @@ import {
   Search,
   RefreshCw,
   ExternalLink,
-  Repeat2,
-  Heart,
   Radio,
   Zap,
   CheckCircle2,
@@ -26,57 +24,10 @@ export interface NewsItem {
   importance: 'breaking' | 'high' | 'normal'
   timestamp: string
   timeAgo: string
-  url?: string
+  url: string
   authorHandle?: string
-  retweets?: string
-  likes?: string
-  badge?: string
+  badge: string
 }
-
-// Clean HTML tags
-const cleanText = (htmlStr: string): string => {
-  if (!htmlStr) return ''
-  return htmlStr.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-// Parse UTC dates accurately
-export const parseTimeAgo = (dateStr: string): { timeAgo: string; timestamp: string } => {
-  if (!dateStr) return { timeAgo: 'Az önce', timestamp: 'Şimdi' }
-
-  let date: Date
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateStr)) {
-    date = new Date(dateStr.replace(' ', 'T') + 'Z')
-  } else {
-    date = new Date(dateStr)
-  }
-
-  if (isNaN(date.getTime())) {
-    return { timeAgo: 'Az önce', timestamp: 'Şimdi' }
-  }
-
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffMs / (1000 * 60))
-  const diffHours = Math.floor(diffMinutes / 60)
-
-  const timestamp = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-
-  if (diffMinutes <= 1) return { timeAgo: 'Az önce', timestamp }
-  if (diffMinutes < 60) return { timeAgo: `${diffMinutes} dk önce`, timestamp }
-  if (diffHours < 24) return { timeAgo: `${diffHours} sa önce`, timestamp }
-  return { timeAgo: `${Math.floor(diffHours / 24)} gün önce`, timestamp }
-}
-
-const LIVE_FEEDS = [
-  { category: 'x' as NewsCategory, source: 'X / ForexLive Wire', url: 'https://www.forexlive.com/feed/news', importance: 'breaking' as const, badge: 'X TELGRAF', isXWire: true, authorHandle: '@ForexLive' },
-  { category: 'tr' as NewsCategory, source: 'TRT Haber Son Dakika', url: 'https://www.trthaber.com/sondakika_articles.rss', importance: 'breaking' as const, badge: 'SON DAKİKA' },
-  { category: 'tr' as NewsCategory, source: 'Anadolu Ajansı', url: 'https://www.aa.com.tr/tr/rss/default?cat=guncel', importance: 'high' as const, badge: 'AA GÜNCEL' },
-  { category: 'economy' as NewsCategory, source: 'TRT Ekonomi', url: 'https://www.trthaber.com/ekonomi_articles.rss', importance: 'breaking' as const, badge: 'EKONOMİ' },
-  { category: 'economy' as NewsCategory, source: 'CNBC Finance', url: 'https://www.cnbc.com/id/10000664/device/rss/rss.html', importance: 'high' as const, badge: 'KÜRESEL PİYASA' },
-  { category: 'crypto' as NewsCategory, source: 'Decrypt Live', url: 'https://decrypt.co/feed', importance: 'high' as const, badge: 'KRİPTO' },
-  { category: 'crypto' as NewsCategory, source: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', importance: 'high' as const, badge: 'KRİPTO' },
-  { category: 'world' as NewsCategory, source: 'BBC World News', url: 'http://feeds.bbci.co.uk/news/world/rss.xml', importance: 'high' as const, badge: 'DÜNYA' }
-]
 
 function TradingViewTimelineWidget() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -132,54 +83,15 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
   const loadRealNews = useCallback(async () => {
     setIsLoading(true)
     try {
-      const allItems: NewsItem[] = []
-      const promises = LIVE_FEEDS.map(async (feed) => {
-        try {
-          const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`
-          const res = await fetch(apiUrl, { cache: 'no-cache' })
-          if (!res.ok) return []
-          const data = await res.json()
-          if (data.status !== 'ok' || !Array.isArray(data.items)) return []
-
-          return data.items.map((item: { title: string; pubDate: string; description: string; link: string; guid?: string }, index: number) => {
-            const { timeAgo, timestamp } = parseTimeAgo(item.pubDate)
-            const cleanDesc = cleanText(item.description)
-            const isBreaking = feed.importance === 'breaking' && index === 0
-
-            return {
-              id: `real-${feed.source}-${item.guid || item.link || index}-${Date.now()}`,
-              title: item.title,
-              summary: cleanDesc.length > 200 ? `${cleanDesc.substring(0, 200)}...` : cleanDesc || item.title,
-              source: feed.source,
-              category: feed.category,
-              importance: isBreaking ? 'breaking' : feed.importance,
-              timestamp,
-              timeAgo,
-              url: item.link,
-              badge: feed.badge,
-              authorHandle: feed.isXWire ? feed.authorHandle : undefined,
-              retweets: feed.isXWire ? `${Math.floor(Math.random() * 800 + 200)}` : undefined,
-              likes: feed.isXWire ? `${(Math.random() * 3 + 1).toFixed(1)}K` : undefined
-            } as NewsItem
-          })
-        } catch {
-          return []
-        }
-      })
-
-      const results = await Promise.allSettled(promises)
-      for (const r of results) {
-        if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-          allItems.push(...r.value)
-        }
-      }
-
-      if (allItems.length > 0) {
-        setNews(allItems)
-        setLastUpdated(new Date().toLocaleTimeString('tr-TR'))
+      const res = await fetch('/api/terminal-news', { cache: 'no-cache' })
+      if (!res.ok) throw new Error('API error')
+      const data = await res.json()
+      if (data.status === 'ok' && Array.isArray(data.items)) {
+        setNews(data.items)
+        setLastUpdated(data.updatedAt || new Date().toLocaleTimeString('tr-TR'))
       }
     } catch (e) {
-      console.error(e)
+      console.error('Error fetching live news:', e)
     } finally {
       setIsLoading(false)
     }
@@ -187,7 +99,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
 
   useEffect(() => {
     loadRealNews()
-    const timer = setInterval(loadRealNews, 60000)
+    const timer = setInterval(loadRealNews, 45000)
     return () => clearInterval(timer)
   }, [loadRealNews])
 
@@ -244,7 +156,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
           onClick={() => loadRealNews()}
           disabled={isLoading}
           title="Verileri Yenile"
-          className="p-1.5 px-2 rounded bg-[rgba(255,119,0,0.1)] border border-[rgba(255,119,0,0.4)] text-[#ff7700] hover:bg-[rgba(255,119,0,0.2)] transition flex items-center space-x-1 text-[10px] font-mono"
+          className="p-1.5 px-2 rounded bg-[rgba(255,119,0,0.1)] border border-[rgba(255,119,0,0.4)] text-[#ff7700] hover:bg-[rgba(255,119,0,0.2)] transition flex items-center space-x-1 text-[10px] font-mono cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline font-bold">YENİLE</span>
@@ -255,7 +167,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
       <div className="flex border-b border-[rgba(255,119,0,0.2)] bg-[#050100]">
         <button
           onClick={() => setFeedMode('realtime')}
-          className={`flex-1 py-1.5 text-[11px] font-[var(--font-rajdhani)] font-bold tracking-[1px] border-b-2 transition flex items-center justify-center space-x-1.5 ${
+          className={`flex-1 py-1.5 text-[11px] font-[var(--font-rajdhani)] font-bold tracking-[1px] border-b-2 transition flex items-center justify-center space-x-1.5 cursor-pointer ${
             feedMode === 'realtime'
               ? 'border-[#ff7700] text-[#ff7700] bg-[rgba(255,119,0,0.08)] [text-shadow:var(--glow-orange)]'
               : 'border-transparent text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'
@@ -266,7 +178,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
         </button>
         <button
           onClick={() => setFeedMode('tradingview')}
-          className={`flex-1 py-1.5 text-[11px] font-[var(--font-rajdhani)] font-bold tracking-[1px] border-b-2 transition flex items-center justify-center space-x-1.5 ${
+          className={`flex-1 py-1.5 text-[11px] font-[var(--font-rajdhani)] font-bold tracking-[1px] border-b-2 transition flex items-center justify-center space-x-1.5 cursor-pointer ${
             feedMode === 'tradingview'
               ? 'border-[#ff7700] text-[#ff7700] bg-[rgba(255,119,0,0.08)] [text-shadow:var(--glow-orange)]'
               : 'border-transparent text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'
@@ -290,7 +202,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-2.5 py-0.5 rounded text-[10px] font-[var(--font-rajdhani)] font-bold tracking-[0.5px] transition flex items-center space-x-1 ${
+                  className={`px-2.5 py-0.5 rounded text-[10px] font-[var(--font-rajdhani)] font-bold tracking-[0.5px] transition flex items-center space-x-1 cursor-pointer ${
                     selectedCategory === cat.id
                       ? 'bg-[rgba(255,119,0,0.2)] text-[#ff7700] border border-[#ff7700]/60 shadow-[var(--glow-orange)]'
                       : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700] hover:bg-[rgba(255,119,0,0.05)]'
@@ -321,7 +233,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
           <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5">
             {filteredNews.length === 0 ? (
               <div className="text-center py-12 text-[rgba(255,238,221,0.4)] text-xs font-mono">
-                {isLoading ? 'Haberler yükleniyor...' : 'Kayıt bulunamadı.'}
+                {isLoading ? 'Canlı haber akışı bağlanıyor...' : 'Arama kriterine uygun aktif haber bulunamadı.'}
               </div>
             ) : (
               filteredNews.map((item) => {
@@ -379,22 +291,9 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
                     )}
 
                     <div className="mt-2 pt-1.5 border-t border-[rgba(255,119,0,0.15)] flex items-center justify-between text-[10px] text-[rgba(255,238,221,0.4)]">
-                      {isX ? (
-                        <div className="flex items-center space-x-3 text-[#ff7700]/80 font-mono">
-                          <span className="flex items-center space-x-1">
-                            <Repeat2 className="w-3 h-3" />
-                            <span>{item.retweets || '420'}</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Heart className="w-3 h-3 text-[#ff2244]" />
-                            <span>{item.likes || '1.8K'}</span>
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="px-1.5 py-0.2 rounded bg-[#050100] border border-[rgba(255,119,0,0.2)] text-[rgba(255,119,0,0.8)] font-mono text-[9px] uppercase">
-                          {item.badge || item.category}
-                        </span>
-                      )}
+                      <span className="px-1.5 py-0.2 rounded bg-[#050100] border border-[rgba(255,119,0,0.2)] text-[rgba(255,119,0,0.8)] font-mono text-[9px] uppercase">
+                        {item.badge || item.category}
+                      </span>
 
                       {item.url && (
                         <a
@@ -418,7 +317,7 @@ export function TerminalNews({ soundEnabled }: { soundEnabled: boolean }) {
           <div className="p-2 bg-[#050100] border-t border-[rgba(255,119,0,0.2)] flex items-center justify-between text-[10px] text-[rgba(255,119,0,0.7)] font-mono">
             <div className="flex items-center space-x-1.5">
               <CheckCircle2 className="w-3 h-3 text-[#00ff9d]" />
-              <span>Gerçek Veri: {filteredNews.length} Haber</span>
+              <span>Canlı Akış: {filteredNews.length} Haber</span>
             </div>
             <span className="text-[rgba(255,238,221,0.4)]">
               {lastUpdated ? `Güncelleme: ${lastUpdated}` : 'Canlı Senkronize'}

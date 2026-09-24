@@ -24,18 +24,34 @@ export interface ChartConfig {
 }
 
 const POPULAR_SYMBOLS = [
-  { id: 'tur-etf', symbol: 'AMEX:TUR', name: 'iShares Türkiye BIST ETF', category: 'bist', exchange: 'AMEX' },
-  { id: 'btcusdt', symbol: 'BINANCE:BTCUSDT', name: 'Bitcoin', category: 'crypto', exchange: 'BINANCE' },
-  { id: 'ethusdt', symbol: 'BINANCE:ETHUSDT', name: 'Ethereum', category: 'crypto', exchange: 'BINANCE' },
-  { id: 'solusdt', symbol: 'BINANCE:SOLUSDT', name: 'Solana', category: 'crypto', exchange: 'BINANCE' },
-  { id: 'xauusd', symbol: 'OANDA:XAUUSD', name: 'Ons Altın', category: 'commodities', exchange: 'OANDA' },
-  { id: 'usdtry', symbol: 'FX:USDTRY', name: 'Dolar / TL', category: 'forex', exchange: 'FX' },
-  { id: 'eurtry', symbol: 'FX:EURTRY', name: 'Euro / TL', category: 'forex', exchange: 'FX' },
-  { id: 'spx', symbol: 'FOREXCOM:SPXUSD', name: 'S&P 500 Endeksi', category: 'indices', exchange: 'FOREXCOM' },
-  { id: 'ndx', symbol: 'FOREXCOM:NSXUSD', name: 'Nasdaq 100 Endeksi', category: 'indices', exchange: 'FOREXCOM' },
-  { id: 'nvda', symbol: 'NASDAQ:NVDA', name: 'Nvidia Corp', category: 'indices', exchange: 'NASDAQ' },
-  { id: 'bist100_direct', symbol: 'BIST:XU100', name: 'BIST 100', category: 'bist', exchange: 'BIST' },
-  { id: 'thyao_direct', symbol: 'BIST:THYAO', name: 'Türk Hava Yolları', category: 'bist', exchange: 'BIST' }
+  // Serbest Canlı Varlıklar
+  { id: 'tur-etf', symbol: 'AMEX:TUR', name: 'iShares Türkiye BIST ETF', category: 'bist', exchange: 'AMEX', desc: 'Türk Hisseleri Borsa Fonu (Canlı)' },
+  { id: 'btcusdt', symbol: 'BINANCE:BTCUSDT', name: 'Bitcoin', category: 'crypto', exchange: 'BINANCE', desc: 'BTC / Tether US' },
+  { id: 'ethusdt', symbol: 'BINANCE:ETHUSDT', name: 'Ethereum', category: 'crypto', exchange: 'BINANCE', desc: 'ETH / Tether US' },
+  { id: 'solusdt', symbol: 'BINANCE:SOLUSDT', name: 'Solana', category: 'crypto', exchange: 'BINANCE', desc: 'SOL / Tether US' },
+  { id: 'xauusd', symbol: 'OANDA:XAUUSD', name: 'Ons Altın', category: 'commodities', exchange: 'OANDA', desc: 'Spot Gold / USD' },
+  { id: 'usdtry', symbol: 'FX:USDTRY', name: 'Dolar / TL', category: 'forex', exchange: 'FX', desc: 'USD / Turkish Lira' },
+  { id: 'eurtry', symbol: 'FX:EURTRY', name: 'Euro / TL', category: 'forex', exchange: 'FX', desc: 'EUR / Turkish Lira' },
+  { id: 'eurusd', symbol: 'FX:EURUSD', name: 'EUR / USD', category: 'forex', exchange: 'FX', desc: 'Euro / US Dollar' },
+  { id: 'spx', symbol: 'FOREXCOM:SPXUSD', name: 'S&P 500 Endeksi', category: 'indices', exchange: 'FOREXCOM', desc: 'S&P 500 Spot' },
+  { id: 'ndx', symbol: 'FOREXCOM:NSXUSD', name: 'Nasdaq 100 Endeksi', category: 'indices', exchange: 'FOREXCOM', desc: 'US Tech 100 Spot' },
+  { id: 'nvda', symbol: 'NASDAQ:NVDA', name: 'Nvidia Corp', category: 'indices', exchange: 'NASDAQ', desc: 'NVIDIA Corporation' },
+  { id: 'aapl', symbol: 'NASDAQ:AAPL', name: 'Apple Inc', category: 'indices', exchange: 'NASDAQ', desc: 'Apple Inc.' },
+  { id: 'tsla', symbol: 'NASDAQ:TSLA', name: 'Tesla Inc', category: 'indices', exchange: 'NASDAQ', desc: 'Tesla Inc.' },
+  // BIST Doğrudan Semboller
+  { id: 'bist100_direct', symbol: 'BIST:XU100', name: 'BIST 100 Endeksi', category: 'bist', exchange: 'BIST', desc: 'Borsa İstanbul 100 (TradingView Açılır)' },
+  { id: 'thyao_direct', symbol: 'BIST:THYAO', name: 'Türk Hava Yolları', category: 'bist', exchange: 'BIST', desc: 'THY (TradingView Açılır)' },
+  { id: 'garan_direct', symbol: 'BIST:GARAN', name: 'Garanti BBVA', category: 'bist', exchange: 'BIST', desc: 'Garanti Bankası (TradingView Açılır)' },
+  { id: 'asels_direct', symbol: 'BIST:ASELS', name: 'Aselsan', category: 'bist', exchange: 'BIST', desc: 'Aselsan Elektronik (TradingView Açılır)' }
+]
+
+const TIMEFRAMES = [
+  { label: '5D', value: '5' },
+  { label: '15D', value: '15' },
+  { label: '1S', value: '60' },
+  { label: '4S', value: '240' },
+  { label: 'GÜN', value: 'D' },
+  { label: 'HAFTA', value: 'W' }
 ]
 
 function SingleChart({
@@ -46,7 +62,8 @@ function SingleChart({
   canRemove,
   onRemove,
   onSymbolClick,
-  onSwitchToSymbol
+  onSwitchToSymbol,
+  onTimeframeChange
 }: {
   id: string
   symbol: string
@@ -56,6 +73,7 @@ function SingleChart({
   onRemove?: () => void
   onSymbolClick?: () => void
   onSwitchToSymbol?: (newSym: string, newName: string) => void
+  onTimeframeChange?: (newInterval: string) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const isBistDirect = symbol.toUpperCase().startsWith('BIST:')
@@ -127,7 +145,7 @@ function SingleChart({
           <button
             onClick={onSymbolClick}
             title="Sembol Değiştir"
-            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-[rgba(255,119,0,0.15)] border border-[#ff7700]/50 text-[#ff7700] text-xs font-mono font-bold hover:bg-[#ff7700] hover:text-black transition"
+            className="flex items-center space-x-1 px-2 py-0.5 rounded bg-[rgba(255,119,0,0.15)] border border-[#ff7700]/50 text-[#ff7700] text-xs font-mono font-bold hover:bg-[#ff7700] hover:text-black transition cursor-pointer"
           >
             <span>{symbol}</span>
             <span className="text-[9px]">▼</span>
@@ -135,9 +153,23 @@ function SingleChart({
           <span className="text-xs font-bold text-[#ffeedd] truncate max-w-[140px] hidden sm:inline font-[var(--font-rajdhani)]">
             {name}
           </span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/60 text-[#ff7700] font-mono border border-[rgba(255,119,0,0.2)]">
-            {interval === 'D' ? 'GÜNLÜK' : interval}
-          </span>
+
+          {/* Timeframe quick switches */}
+          <div className="hidden md:flex items-center space-x-1 bg-black/60 border border-[rgba(255,119,0,0.2)] rounded px-1 py-0.5">
+            {TIMEFRAMES.map((tf) => (
+              <button
+                key={tf.value}
+                onClick={() => onTimeframeChange?.(tf.value)}
+                className={`text-[9px] font-mono px-1 py-0.2 rounded transition cursor-pointer ${
+                  interval === tf.value
+                    ? 'bg-[#ff7700] text-black font-black'
+                    : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'
+                }`}
+              >
+                {tf.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center space-x-1">
@@ -156,7 +188,7 @@ function SingleChart({
             <button
               onClick={handleRefresh}
               title="Yenile"
-              className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-[#ff7700] transition"
+              className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-[#ff7700] transition cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
@@ -166,7 +198,7 @@ function SingleChart({
             <button
               onClick={onRemove}
               title="Grafiği Kapat"
-              className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-[#ff2244] transition"
+              className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-[#ff2244] transition cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -207,7 +239,7 @@ function SingleChart({
             {onSwitchToSymbol && (
               <button
                 onClick={() => onSwitchToSymbol('AMEX:TUR', 'iShares Türkiye BIST ETF')}
-                className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded bg-[rgba(255,119,0,0.1)] border border-[#ff7700]/40 text-[#ff7700] font-bold text-xs hover:bg-[rgba(255,119,0,0.2)] transition font-mono"
+                className="flex-1 flex items-center justify-center space-x-2 px-3 py-2 rounded bg-[rgba(255,119,0,0.1)] border border-[#ff7700]/40 text-[#ff7700] font-bold text-xs hover:bg-[rgba(255,119,0,0.2)] transition font-mono cursor-pointer"
               >
                 <TrendingUp className="w-4 h-4 text-[#00ff9d]" />
                 <span>TUR BIST ETF'e Geç (Açık)</span>
@@ -281,10 +313,17 @@ export function TerminalCharts() {
     setCharts((prev) => prev.filter((c) => c.id !== id))
   }
 
+  const handleTimeframeChange = (chartId: string, newInterval: string) => {
+    setCharts((prev) =>
+      prev.map((c) => (c.id === chartId ? { ...c, interval: newInterval } : c))
+    )
+  }
+
   const filteredSymbols = POPULAR_SYMBOLS.filter(
     (s) =>
       s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.name.toLowerCase().includes(searchQuery.toLowerCase())
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.desc.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -306,7 +345,7 @@ export function TerminalCharts() {
                   return updated
                 })
               }}
-              className="px-2 py-0.5 rounded bg-[rgba(10,3,0,0.9)] hover:bg-[rgba(255,119,0,0.2)] border border-[rgba(255,119,0,0.25)] hover:border-[#ff7700] text-[11px] font-mono text-[rgba(255,238,221,0.8)] hover:text-[#ff7700] transition"
+              className="px-2 py-0.5 rounded bg-[rgba(10,3,0,0.9)] hover:bg-[rgba(255,119,0,0.2)] border border-[rgba(255,119,0,0.25)] hover:border-[#ff7700] text-[11px] font-mono text-[rgba(255,238,221,0.8)] hover:text-[#ff7700] transition cursor-pointer"
             >
               {p.label}
             </button>
@@ -319,21 +358,21 @@ export function TerminalCharts() {
             <button
               onClick={() => setLayout('single')}
               title="1x Tek Büyük Ekran"
-              className={`p-1 rounded ${layout === 'single' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
+              className={`p-1 rounded cursor-pointer ${layout === 'single' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
             >
               <Square className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setLayout('split')}
               title="2x İkili Bölünmüş"
-              className={`p-1 rounded ${layout === 'split' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
+              className={`p-1 rounded cursor-pointer ${layout === 'split' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
             >
               <Columns className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setLayout('quad')}
               title="4x Dörtlü Izgara"
-              className={`p-1 rounded ${layout === 'quad' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
+              className={`p-1 rounded cursor-pointer ${layout === 'quad' ? 'bg-[#ff7700] text-black' : 'text-[rgba(255,238,221,0.5)] hover:text-[#ff7700]'}`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
@@ -344,7 +383,7 @@ export function TerminalCharts() {
               setEditingChartId(null)
               setIsModalOpen(true)
             }}
-            className="flex items-center space-x-1 px-2.5 py-1 rounded bg-gradient-to-r from-[#ff7700] to-[#ff4400] text-black text-xs font-black font-mono shadow-[var(--glow-orange)] transition"
+            className="flex items-center space-x-1 px-2.5 py-1 rounded bg-gradient-to-r from-[#ff7700] to-[#ff4400] text-black text-xs font-black font-mono shadow-[var(--glow-orange)] transition cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>GRAFİK EKLE</span>
@@ -380,6 +419,7 @@ export function TerminalCharts() {
                 prev.map((c) => (c.id === chart.id ? { ...c, symbol: newSym, name: newName } : c))
               )
             }}
+            onTimeframeChange={(newInterval) => handleTimeframeChange(chart.id, newInterval)}
           />
         ))}
       </div>
@@ -394,7 +434,7 @@ export function TerminalCharts() {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-white"
+                className="p-1 rounded text-[rgba(255,238,221,0.5)] hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -419,7 +459,7 @@ export function TerminalCharts() {
               />
               <button
                 type="submit"
-                className="px-4 py-1.5 bg-[#ff7700] text-black font-black text-xs rounded font-mono"
+                className="px-4 py-1.5 bg-[#ff7700] text-black font-black text-xs rounded font-mono cursor-pointer"
               >
                 UYGULA
               </button>
@@ -448,7 +488,7 @@ export function TerminalCharts() {
                   className="flex items-center justify-between p-2.5 rounded bg-[rgba(15,5,1,0.8)] border border-[rgba(255,119,0,0.15)] hover:border-[#ff7700] hover:bg-[rgba(255,119,0,0.1)] cursor-pointer transition"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <span className="w-14 text-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/60 border border-[rgba(255,119,0,0.3)] text-[#ff7700]">
+                    <span className="w-16 text-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-black/60 border border-[rgba(255,119,0,0.3)] text-[#ff7700]">
                       {item.exchange}
                     </span>
                     <div>
@@ -456,7 +496,7 @@ export function TerminalCharts() {
                         {item.name}
                       </div>
                       <div className="text-[10px] text-[rgba(255,238,221,0.5)] font-mono">
-                        {item.symbol}
+                        {item.symbol} • {item.desc}
                       </div>
                     </div>
                   </div>
