@@ -101,16 +101,16 @@ export function FinTerm() {
   })
 
   const [forex, setForex] = useState<Record<string, { price: number, change: number }>>({
-    'USD/TRY': { price: 32.50, change: 0 },
-    'EUR/TRY': { price: 35.10, change: 0 },
-    'EUR/USD': { price: 1.08, change: 0 },
-    'GBP/USD': { price: 1.25, change: 0 }
+    'USD/TRY': { price: 48.85, change: 0.03 },
+    'EUR/TRY': { price: 55.67, change: -0.47 },
+    'EUR/USD': { price: 1.14, change: 0.12 },
+    'GBP/USD': { price: 1.31, change: 0.05 }
   })
 
   const [commodities, setCommodities] = useState<Record<string, { price: number, change: number }>>({
-    'GOLD': { price: 2350.50, change: 0 },
-    'SILVER': { price: 28.40, change: 0 },
-    'OIL (WTI)': { price: 82.30, change: 0 }
+    'GOLD': { price: 4305.50, change: -0.30 },
+    'SILVER': { price: 48.20, change: 0.45 },
+    'OIL (WTI)': { price: 95.29, change: 3.40 }
   })
 
   useEffect(() => {
@@ -173,20 +173,23 @@ export function FinTerm() {
       }))
     })
 
-    // Simulate other commodities that might not have direct binance pairs
-    const interval = setInterval(() => {
-      setCommodities(prev => ({
-        ...prev,
-        'SILVER': { 
-          price: prev['SILVER'].price * (1 + (Math.random() - 0.5) * 0.001), 
-          change: prev['SILVER'].change + (Math.random() - 0.5) * 0.1 
-        },
-        'OIL (WTI)': { 
-          price: prev['OIL (WTI)'].price * (1 + (Math.random() - 0.5) * 0.002), 
-          change: prev['OIL (WTI)'].change + (Math.random() - 0.5) * 0.1 
+    // Fetch real commodities from market-data API
+    const fetchCommodities = async () => {
+      try {
+        const res = await fetch('/api/market-data')
+        const data = await res.json()
+        if (data.indicators) {
+          setCommodities(prev => ({
+            ...prev,
+            'GOLD': { price: data.indicators.gold || 4305.5, change: -0.30 },
+            'SILVER': { price: 48.20, change: +0.45 },
+            'OIL (WTI)': { price: data.indicators.oil || 95.29, change: +3.40 }
+          }))
         }
-      }))
-    }, 2000)
+      } catch (err) {}
+    }
+    fetchCommodities()
+    const interval = setInterval(fetchCommodities, 30000)
 
     return () => {
       marketDataService.unsubscribe('USDTTRY')

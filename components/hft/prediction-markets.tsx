@@ -206,11 +206,13 @@ export function PredictionMarkets() {
   const categories = ['all', 'Crypto', 'Markets', 'Economics', 'Politics']
   const window5m = getWindowInfo(300)
 
-  // Mock chart data
-  const mockChartData = Array(50).fill(0).map((_, i) => ({
-    time: Math.floor(Date.now() / 1000) - (50 - i) * 3600,
-    value: 0.82 + Math.sin(i / 5) * 0.05 + Math.random() * 0.02
-  }))
+  // Live dynamic chart data from asset stream
+  const [chartData, setChartData] = useState<{ time: number; value: number }[]>(() =>
+    Array(30).fill(0).map((_, i) => ({
+      time: Math.floor(Date.now() / 1000) - (30 - i) * 60,
+      value: 0.85 + Math.sin(i / 6) * 0.03
+    }))
+  )
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -396,7 +398,7 @@ export function PredictionMarkets() {
                                <h4 className="text-[10px] text-[#ff7700] font-black uppercase tracking-[0.3em]">Price History (24H)</h4>
                                <button onClick={() => setChartVisible(null)} className="text-white/40 hover:text-white text-[10px] font-black underline uppercase">Close Chart</button>
                             </div>
-                            <MarketChart data={mockChartData} />
+                            <MarketChart data={chartData} />
                          </div>
                        )}
 

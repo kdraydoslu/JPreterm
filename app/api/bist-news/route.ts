@@ -1,72 +1,106 @@
 import { NextResponse } from 'next/server'
 
-// BIST ve Türkiye ekonomisi haberleri
+export const dynamic = 'force-dynamic'
+export const revalidate = 30
+
+function cleanText(htmlStr: string): string {
+  if (!htmlStr) return ''
+  return htmlStr
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// BIST ve Türkiye ekonomisi gerçek haberleri
 export async function GET() {
   try {
-    // Gerçek uygulamada RSS feed veya haber API'si kullanılabilir
-    const news = [
+    const feeds = [
       {
-        id: 1,
-        time: new Date(Date.now() - 15 * 60000).toISOString(),
-        source: 'Bloomberg HT',
-        title: 'TCMB faiz kararını açıkladı',
-        content: 'Merkez Bankası politika faizini %50 seviyesinde sabit tuttu.',
-        impact: 'HIGH',
-        category: 'MONETARY_POLICY'
+        url: 'https://www.trthaber.com/ekonomi_articles.rss',
+        source: 'TRT Ekonomi'
       },
       {
-        id: 2,
-        time: new Date(Date.now() - 45 * 60000).toISOString(),
-        source: 'Anadolu Ajansı',
-        title: 'THYAO yeni uçak siparişi verdi',
-        content: 'Türk Hava Yolları 50 adet yeni uçak siparişi verdiğini açıkladı.',
-        impact: 'MEDIUM',
-        category: 'CORPORATE'
+        url: 'https://www.aa.com.tr/tr/rss/default?cat=guncel',
+        source: 'Anadolu Ajansı'
       },
       {
-        id: 3,
-        time: new Date(Date.now() - 90 * 60000).toISOString(),
-        source: 'Reuters',
-        title: 'Enflasyon verileri beklentilerin üzerinde',
-        content: 'Aylık enflasyon %3.2 olarak açıklandı, beklenti %2.9 idi.',
-        impact: 'HIGH',
-        category: 'ECONOMIC_DATA'
-      },
-      {
-        id: 4,
-        time: new Date(Date.now() - 120 * 60000).toISOString(),
-        source: 'Investing.com',
-        title: 'ASELS savunma sanayi ihracatını artırdı',
-        content: 'Aselsan ilk çeyrek ihracat rakamlarını %45 artışla açıkladı.',
-        impact: 'MEDIUM',
-        category: 'CORPORATE'
-      },
-      {
-        id: 5,
-        time: new Date(Date.now() - 180 * 60000).toISOString(),
-        source: 'Dünya Gazetesi',
-        title: 'Bankacılık sektörü kâr açıkladı',
-        content: 'Özel bankalar ilk çeyrek kârlarını açıkladı, sektör büyümesi devam ediyor.',
-        impact: 'MEDIUM',
-        category: 'SECTOR'
-      },
-      {
-        id: 6,
-        time: new Date(Date.now() - 240 * 60000).toISOString(),
-        source: 'TRT Haber',
-        title: 'Dolar/TL 34.25 seviyesinde',
-        content: 'Dolar/TL paritesi gün içinde %0.45 yükselişle 34.25 seviyesinde işlem görüyor.',
-        impact: 'HIGH',
-        category: 'FOREX'
+        url: 'https://www.trthaber.com/sondakika_articles.rss',
+        source: 'TRT Son Dakika'
       }
     ]
 
+    const allNews: any[] = []
+
+    for (const feed of feeds) {
+      try {
+        const res = await fetch(feed.url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) JarvisPreTerm/1.0',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+          },
+          next: { revalidate: 30 }
+        })
+
+        if (!res.ok) continue
+        const xml = await res.text()
+        const itemMatches = xml.match(/<item[\s\S]*?<\/item>/gi) || []
+
+        for (let i = 0; i < Math.min(itemMatches.length, 6); i++) {
+          const rawItem = itemMatches[i]
+          const titleMatch = rawItem.match(/<title>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/title>/is)
+          const title = cleanText(titleMatch ? (titleMatch[1] || titleMatch[2] || '') : '')
+
+          const descMatch = rawItem.match(/<description>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/description>/is)
+          const content = cleanText(descMatch ? (descMatch[1] || descMatch[2] || '') : '')
+
+          const pubDateMatch = rawItem.match(/<pubDate>(.*?)<\/pubDate>/is)
+          const pubDate = pubDateMatch ? pubDateMatch[1].trim() : ''
+
+          const linkMatch = rawItem.match(/<link>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/link>/is)
+          const url = (linkMatch ? (linkMatch[1] || linkMatch[2] || '') : '').trim()
+
+          if (!title) continue
+
+          const isHigh = i === 0 || title.toLowerCase().includes('faiz') || title.toLowerCase().includes('enflasyon') || title.toLowerCase().includes('bist')
+
+          allNews.push({
+            id: `bist-${feed.source}-${i}-${Date.now()}`,
+            time: pubDate ? new Date(pubDate).toISOString() : new Date().toISOString(),
+            source: feed.source,
+            title,
+            content: content || title,
+            impact: isHigh ? 'HIGH' : 'MEDIUM',
+            category: 'MARKET',
+            url
+          })
+        }
+      } catch (err) {
+        // continue to next feed
+      }
+    }
+
     return NextResponse.json({
-      news,
+      news: allNews.length > 0 ? allNews : [
+        {
+          id: 'default-1',
+          time: new Date().toISOString(),
+          source: 'BIST / KAP',
+          title: 'Borsa İstanbul BIST 100 Endeksi İşlemleri Devam Ediyor',
+          content: 'BIST 100 endeksi ve pay piyasalarında canlı fiyatlama aktif veri sağlayıcı üzerinden takip ediliyor.',
+          impact: 'HIGH',
+          category: 'MARKET'
+        }
+      ],
       timestamp: new Date().toISOString()
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('BIST news fetch error:', error)
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to fetch news' }, { status: 500 })
   }
 }

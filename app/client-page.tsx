@@ -35,7 +35,7 @@ export default function ClientTerminal() {
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative pb-[90px]">
         {activeTab === 0 && <LiveWorkstation />}
         {activeTab === 1 && <Overview />}
         {activeTab === 2 && <Portfolio />}

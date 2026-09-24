@@ -30,31 +30,27 @@ export function LeftSidebar() {
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setNetPnl((prev) => prev + (Math.random() - 0.45) * 50)
-      setPositions((prev) =>
-        prev.map((p) => ({
-          ...p,
-          pnl: p.pnl + (Math.random() - 0.5) * 20,
-        }))
-      )
-    }, 800)
+    const fetchRealNews = async () => {
+      try {
+        const res = await fetch('/api/terminal-news')
+        const data = await res.json()
+        if (data.items && data.items.length > 0) {
+          setNews(data.items.slice(0, 8).map((item: any) => ({
+            src: item.source,
+            text: item.title,
+            urgent: item.importance === 'breaking'
+          })))
+        }
+      } catch (e) {}
+    }
 
-    // News feed
-    const newsInterval = setInterval(() => {
-      const item = NEWS[index % NEWS.length]
-      setNews((prev) => {
-        const newNews = [item, ...prev]
-        return newNews.slice(0, 6)
-      })
-      setIndex((i) => i + 1)
-    }, 1200)
+    fetchRealNews()
+    const newsInterval = setInterval(fetchRealNews, 30000)
 
     return () => {
-      clearInterval(interval)
       clearInterval(newsInterval)
     }
-  }, [index])
+  }, [])
 
   const formatPnl = (val: number) => (val >= 0 ? '+' : '') + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 

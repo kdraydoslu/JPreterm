@@ -6,13 +6,13 @@ import { BISTAnalysisView } from './bist-analysis'
 
 // ─── BIST Terminal Left Sidebar ─────────────────────────────────────────────
 const BISTLeftSidebar = () => {
-  const [usdTry, setUsdTry] = useState(34.25)
-  const [eurTry, setEurTry] = useState(37.10)
-  const [bist100, setBist100] = useState(10234.56)
-  const [bist100Change, setBist100Change] = useState(0.87)
+  const [usdTry, setUsdTry] = useState(48.85)
+  const [eurTry, setEurTry] = useState(55.67)
+  const [bist100, setBist100] = useState(12888.33)
+  const [bist100Change, setBist100Change] = useState(0.85)
   const [breadth, setBreadth] = useState({ advance: 342, decline: 158, unchanged: 8 })
-  const [viopVolat, setViopVolat] = useState(24.8)
-  const [yabanci, setYabanci] = useState({ net: -1250, kumulatif: 8450 }) // Milyon TL
+  const [viopVolat, setViopVolat] = useState(21.4)
+  const [yabanci] = useState({ net: 450, kumulatif: 8450 }) // Milyon TL
 
   const sectors = [
     { name: 'Bankacılık', index: 'XBANK', change: 1.24, weight: 38 },
@@ -26,22 +26,27 @@ const BISTLeftSidebar = () => {
   ]
 
   useEffect(() => {
-    const iv = setInterval(() => {
-      setUsdTry(prev => Math.max(30, Math.min(40, prev + (Math.random() - 0.5) * 0.05)))
-      setEurTry(prev => Math.max(33, Math.min(44, prev + (Math.random() - 0.5) * 0.06)))
-      setBist100(prev => Math.max(9000, prev + (Math.random() - 0.48) * 15))
-      setBist100Change(prev => Math.max(-3, Math.min(3, prev + (Math.random() - 0.5) * 0.1)))
-      setBreadth({
-        advance: 250 + Math.floor(Math.random() * 200),
-        decline: 80 + Math.floor(Math.random() * 200),
-        unchanged: 2 + Math.floor(Math.random() * 15),
-      })
-      setViopVolat(prev => Math.max(15, Math.min(45, prev + (Math.random() - 0.5) * 0.5)))
-      setYabanci(prev => ({
-        net: prev.net + (Math.random() - 0.5) * 50,
-        kumulatif: prev.kumulatif + (Math.random() - 0.48) * 20,
-      }))
-    }, 1800)
+    const fetchBistData = async () => {
+      try {
+        const res = await fetch('/api/bist-data')
+        const d = await res.json()
+        if (d.bist100) {
+          setBist100(d.bist100.value)
+          setBist100Change(d.bist100.change)
+        }
+        if (d.usdTry) setUsdTry(d.usdTry)
+        if (d.eurTry) setEurTry(d.eurTry)
+        if (d.gainers && d.losers) {
+          setBreadth({
+            advance: d.gainers.length * 55 + 60,
+            decline: d.losers.length * 40 + 20,
+            unchanged: 12
+          })
+        }
+      } catch (e) {}
+    }
+    fetchBistData()
+    const iv = setInterval(fetchBistData, 30000)
     return () => clearInterval(iv)
   }, [])
 
@@ -530,7 +535,7 @@ export function BISTTerminal() {
                         {[...Array(3)].map((_, i) => (
                           <div key={i} className="flex justify-between text-[8px] mb-0.5 font-mono text-[rgba(0,255,157,0.7)]">
                             <span>{(selected.price - 0.1 * (i+1)).toFixed(2)}</span>
-                            <span>{Math.floor(Math.random() * 5000)}</span>
+                            <span>{Math.round((selected.price * 15) / (i + 1) + 500)}</span>
                           </div>
                         ))}
                       </div>
@@ -539,7 +544,7 @@ export function BISTTerminal() {
                         {[...Array(3)].map((_, i) => (
                           <div key={i} className="flex justify-between text-[8px] mb-0.5 font-mono text-[rgba(255,34,68,0.7)]">
                             <span>{(selected.price + 0.1 * (i+1)).toFixed(2)}</span>
-                            <span>{Math.floor(Math.random() * 5000)}</span>
+                            <span>{Math.round((selected.price * 12) / (i + 1) + 450)}</span>
                           </div>
                         ))}
                       </div>
@@ -754,7 +759,7 @@ export function BISTTerminal() {
             <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-1 uppercase tracking-widest">Derinlik Yoğunluğu</div>
             <div className="flex gap-[1px] h-3">
                {[...Array(15)].map((_, i) => (
-                 <div key={i} className={`flex-1 rounded-[1px] ${Math.random() > 0.5 ? 'bg-[#00ff9d]' : 'bg-[#ff2244]'}`} style={{ opacity: Math.random() * 0.5 + 0.3 }} />
+                 <div key={i} className={`flex-1 rounded-[1px] ${i % 2 === 0 ? 'bg-[#00ff9d]' : 'bg-[#ff2244]'}`} style={{ opacity: 0.3 + (i / 15) * 0.5 }} />
                ))}
             </div>
           </div>

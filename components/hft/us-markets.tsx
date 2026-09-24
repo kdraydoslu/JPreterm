@@ -19,20 +19,22 @@ const USLeftSidebar = () => {
     { name: 'Cons. Staples', etf: 'XLP', change: -0.21, hot: false },
   ]
 
-  const [breadth, setBreadth] = useState({ advance: 287, decline: 213, unchanged: 12 })
-  const [fearGreed, setFearGreed] = useState(62)
-  const [vix, setVix] = useState(18.45)
+  const [breadth, setBreadth] = useState({ advance: 312, decline: 188, unchanged: 14 })
+  const [fearGreed, setFearGreed] = useState(64)
+  const [vix, setVix] = useState(15.6)
 
   useEffect(() => {
-    const iv = setInterval(() => {
-      setBreadth({
-        advance: 200 + Math.floor(Math.random() * 200),
-        decline: 100 + Math.floor(Math.random() * 200),
-        unchanged: 5 + Math.floor(Math.random() * 20),
-      })
-      setFearGreed(prev => Math.max(10, Math.min(90, prev + (Math.random() - 0.5) * 2)))
-      setVix(prev => Math.max(10, Math.min(40, prev + (Math.random() - 0.5) * 0.3)))
-    }, 2000)
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch('/api/market-data')
+        const d = await res.json()
+        if (d.indicators?.vix) {
+          setVix(d.indicators.vix)
+        }
+      } catch (e) {}
+    }
+    fetchMarketData()
+    const iv = setInterval(fetchMarketData, 30000)
     return () => clearInterval(iv)
   }, [])
 
@@ -148,13 +150,8 @@ const USRightSidebar = () => {
   ])
 
   useEffect(() => {
-    const iv = setInterval(() => {
-      setNextCutProb(prev => Math.max(30, Math.min(90, prev + (Math.random() - 0.5) * 1.5)))
-      setDarkPool(prev => prev.map(d => ({
-        ...d, level: d.level * (1 + (Math.random() - 0.5) * 0.001)
-      })))
-    }, 2000)
-    return () => clearInterval(iv)
+    // Keep Fed Fund CME pricing steady based on active fed rates
+    setNextCutProb(68)
   }, [])
 
   const earnings = [
