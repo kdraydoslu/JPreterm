@@ -8,7 +8,6 @@ const TABS = [
   'Crypto HFT',
   'US Markets',
   'BIST Terminal',
-  'Prediction Markets',
   'Jarvis OS'
 ]
 

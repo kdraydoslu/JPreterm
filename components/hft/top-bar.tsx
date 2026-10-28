@@ -1,17 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { polymarketService } from '@/lib/polymarket-service'
 import { useWallet } from '@/components/wallet-provider'
 
 export function TopBar({ onOpenOverview }: { onOpenOverview?: () => void } = {}) {
   const { address, isConnected, connect, disconnect, balance } = useWallet()
   const [time, setTime] = useState('--:--:--.---')
-  const [pnl, setPnl] = useState(0)
-  const [winRate, setWinRate] = useState(0)
-  const [riskDeployed, setRiskDeployed] = useState(0)
-  const [totalValue, setTotalValue] = useState(0)
-  const [isConfigured, setIsConfigured] = useState(false)
+  const pnl = 0
+  const winRate = 0
+  const riskDeployed = 0
+  const totalValue = 0
+  const isConfigured = false
 
   useEffect(() => {
     const clockInterval = setInterval(() => {
@@ -23,24 +22,7 @@ export function TopBar({ onOpenOverview }: { onOpenOverview?: () => void } = {})
       setTime(`${h}:${m}:${s}.${ms}`)
     }, 50)
 
-    const checkConfig = () => {
-      if (typeof window !== 'undefined') {
-        const savedConfig = localStorage.getItem('polymarket_config')
-        if (savedConfig) {
-          setIsConfigured(true)
-          polymarketService.fetchBalance().then(bal => setTotalValue(bal.usdc + (bal.eth * 3500)))
-          polymarketService.fetchPositions().then(pos => setPnl(pos.reduce((acc, p) => acc + p.pnl, 0)))
-        }
-      }
-    }
-
-    checkConfig()
-    const configInterval = setInterval(checkConfig, 30000)
-
-    return () => {
-      clearInterval(clockInterval)
-      clearInterval(configInterval)
-    }
+    return () => clearInterval(clockInterval)
   }, [])
 
   const formatPnl = (val: number) => (val >= 0 ? '+' : '') + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
