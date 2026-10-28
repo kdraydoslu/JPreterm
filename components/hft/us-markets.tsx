@@ -316,13 +316,6 @@ export function USMarkets() {
     { "symbol": "BA", "name": "Boeing Co.", "price": 178.60, "change": -1.45, "volume": "8.4M", "technicalIndicators": { "rsi": 39, "macd": -0.8, "sma20": 185, "sma50": 195, "sma200": 210 } }
   ])
 
-  const economicEvents = [
-    { time: '08:30', event: 'Non-Farm Payrolls', impact: 'HIGH', forecast: '185K', previous: '199K' },
-    { time: '10:00', event: 'ISM Manufacturing PMI', impact: 'HIGH', forecast: '48.5', previous: '47.8' },
-    { time: '14:00', event: 'Fed Chair Speech', impact: 'HIGH', forecast: '-', previous: '-' },
-    { time: '15:30', event: 'Crude Oil Inventories', impact: 'MEDIUM', forecast: '-2.1M', previous: '-1.5M' },
-  ]
-
   const [indices, setIndices] = useState([
     { name: 'S&P 500', value: 5987.37, change: 0.45 },
     { name: 'DOW JONES', value: 43910.98, change: -0.12 },
@@ -402,24 +395,21 @@ export function USMarkets() {
     setIsAdding(false)
     
     try {
-      const { marketDataService } = await import('@/lib/market-data')
-      const quote = await marketDataService.fetchFinnhubQuote(sym)
-      if (quote && quote.c) {
+      const response = await fetch(`/api/bist-quote?symbol=${encodeURIComponent(sym)}`)
+      if (!response.ok) return
+      const quote = await response.json()
+      if (quote && typeof quote.price === 'number') {
         setStocks(prev => prev.map(s => s.symbol === sym ? {
           ...s,
-          price: quote.c,
-          change: quote.dp || 0,
-          volume: `${(Math.random() * 50 + 5).toFixed(1)}M`,
-          technicalIndicators: {
-            rsi: 40 + Math.random() * 40,
-            macd: (Math.random() - 0.5) * 2,
-            sma20: quote.c * 0.98,
-            sma50: quote.c * 0.95,
-            sma200: quote.c * 0.85
-          }
+          name: quote.name || sym,
+          price: quote.price,
+          change: quote.pctChange ?? 0,
+          volume: quote.volume || '—',
         } : s))
       }
-    } catch (e) {}
+    } catch {
+      // Kotasyon yoksa satır boş kalır.
+    }
   }
 
   const selected = stocks.find((s: any) => s.symbol === selectedStock) || stocks[0] || {
@@ -561,21 +551,7 @@ export function USMarkets() {
                 {/* Column 3: Economic Feed */}
                 <div className="flex flex-col overflow-hidden px-1">
                    <div className="text-[9px] text-[#ff00aa] font-[var(--font-orbitron)] mb-2 px-1">CALENDAR & EVENTS</div>
-                   <div className="space-y-2 overflow-y-auto custom-scrollbar">
-                      {economicEvents.map((event, i) => (
-                        <div key={i} className="p-2 border-l-2 border-[rgba(255,119,0,0.2)] bg-[rgba(10,3,0,0.4)] rounded-r">
-                           <div className="flex justify-between text-[8px] mb-1">
-                              <span className="text-[#ff7700] font-mono">{event.time}</span>
-                              <span className={event.impact === 'HIGH' ? 'text-[#ff2244]' : 'text-[#ffcc00]'}>{event.impact}</span>
-                           </div>
-                           <div className="text-[10px] text-[rgba(255,238,221,0.8)] mb-1 font-bold">{event.event}</div>
-                           <div className="flex gap-2 text-[8px] text-[rgba(255,119,0,0.4)]">
-                              <span>FCST: <span className="text-[rgba(255,119,0,0.8)]">{event.forecast}</span></span>
-                              <span>PREV: <span className="text-[rgba(255,119,0,0.8)]">{event.previous}</span></span>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
+                   <p className="text-[10px] text-[rgba(255,238,221,0.7)] px-1">Ekonomi takvimi canlı panoda, gerçek kaynaktan gelir.</p>
                    
                    <div className="mt-4 pt-4 border-t border-[rgba(255,119,0,0.1)] shrink-0">
                       <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-2 uppercase tracking-widest">Global Volatility</div>

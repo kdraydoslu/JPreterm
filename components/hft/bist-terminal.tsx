@@ -304,12 +304,6 @@ export function BISTTerminal() {
     { "symbol": "ZOREN", "name": "ZOREN", "price": 3.06, "change": 0.99, "volume": "110.4M", "technicalIndicators": { "rsi": 67.3, "macd": 1.00, "sma20": 3.15, "sma50": 2.81 } }
   ])
 
-  const economicEvents = [
-    { time: '10:00', event: 'TCMB Faiz Kararı', impact: 'HIGH', forecast: '%50.00', previous: '%50.00' },
-    { time: '11:00', event: 'Enflasyon Verileri', impact: 'HIGH', forecast: '%3.2', previous: '%2.9' },
-    { time: '14:00', event: 'İşsizlik Oranı', impact: 'MEDIUM', forecast: '%9.8', previous: '%9.6' },
-  ]
-
   const [indices, setIndices] = useState([
     { name: 'BIST 100', value: 10234.56, change: 0.87 },
     { name: 'BIST 30', value: 11456.78, change: 1.12 },
@@ -618,15 +612,7 @@ export function BISTTerminal() {
                    
                    <div className="mt-4 pt-4 border-t border-[rgba(255,119,0,0.15)] shrink-0">
                       <div className="text-[8px] text-[rgba(255,119,0,0.4)] mb-2 uppercase tracking-[2px]">Ekonomik Takvim</div>
-                      {economicEvents.slice(0, 2).map((event, i) => (
-                        <div key={i} className="p-1.5 mb-2 border-l border-[rgba(255,119,0,0.3)] bg-[rgba(10,3,0,0.4)] rounded-r">
-                           <div className="flex justify-between text-[8px] mb-1 font-mono">
-                              <span className="text-[#ff7700]">{event.time}</span>
-                              <span className={event.impact === 'HIGH' ? 'text-[#ff2244]' : 'text-[#ffcc00]'}>{event.impact}</span>
-                           </div>
-                           <div className="text-[9px] text-[rgba(255,238,221,0.8)]">{event.event}</div>
-                        </div>
-                      ))}
+                      <p className="text-[9px] text-[rgba(255,238,221,0.7)]">Takvim canlı panoda.</p>
                    </div>
                    
                    <div className="mt-2 pt-2 border-t border-[rgba(255,119,0,0.15)] shrink-0">

@@ -221,17 +221,7 @@ export function Overview() {
         } catch (e) {}
       }
 
-      // 2. Stocks/Indices Prefetch
-      const finnSymbols = [...stockList.map(s => s.ticker), ...marketIndices.map(m => m.finn || m.ticker)]
-      for (const s of finnSymbols) {
-        try {
-          const quote = await marketDataService.fetchFinnhubQuote(s)
-          if (quote && quote.c) {
-            setPrices(prev => ({ ...prev, [s]: quote.c }))
-            setChanges(prev => ({ ...prev, [s]: quote.dp || '0' }))
-          }
-        } catch (e) {}
-      }
+      // Hisse fiyatları canlı panodaki /api/snapshot üzerinden gelir.
 
       // 3. BIST Prefetch
       try {
@@ -263,27 +253,7 @@ export function Overview() {
       })
     })
 
-    // 4. Finnhub Stocks Stream
-    const finnTargets = [...stockList.map(s => s.ticker), ...marketIndices.map(m => m.finn || m.ticker)]
-    marketDataService.subscribeFinnhub(finnTargets, (symbol, price) => {
-      if (price) {
-        setPrices(prev => ({ ...prev, [symbol]: price }))
-        setHistory(prev => {
-          const h = prev[symbol] || []
-          return { ...prev, [symbol]: [...h.slice(-19), { value: price }] }
-        })
-      }
-    })
-
-    const fetchMacro = async () => {
-      // Use 2026 realistic real-time projections instead of delayed World Bank data
-      setMacroData([
-        { label: 'GLOBAL GDP GROWTH', value: '3.15%', year: '2026 EST' },
-        { label: 'GLOBAL INFLATION', value: '2.84%', year: '2026 EST' },
-        { label: 'GLOBAL DEBT (TOTAL)', value: '$315.2T', year: 'LIVE' },
-      ])
-    }
-    fetchMacro()
+    setMacroData([])
 
     // 6. BIST Polling
     const fetchBist = async () => {
@@ -393,31 +363,7 @@ export function Overview() {
                 Economic Calendar
                 <div className="w-1.5 h-1.5 rounded-full bg-[#ffcc00] animate-pulse" />
               </span>
-              <div className="space-y-3 overflow-y-auto custom-scrollbar pr-2 flex-1">
-                 {[
-                   { time: '14:30', country: 'US', event: 'Non-Farm Payrolls', impact: 'HIGH', forecast: '185K', prev: '210K' },
-                   { time: '15:00', country: 'EU', event: 'ECB Interest Rate', impact: 'HIGH', forecast: '3.75%', prev: '4.00%' },
-                   { time: '16:00', country: 'US', event: 'ISM Manufacturing PMI', impact: 'MED', forecast: '49.5', prev: '49.2' },
-                   { time: '17:30', country: 'US', event: 'Crude Oil Inventories', impact: 'MED', forecast: '-1.2M', prev: '+2.4M' },
-                   { time: '05:00', country: 'CN', event: 'Caixin Services PMI', impact: 'HIGH', forecast: '52.5', prev: '52.7' }
-                 ].map((s, i) => (
-                   <div key={i} className="flex flex-col border-b border-white/5 pb-2 last:border-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${s.impact === 'HIGH' ? 'bg-[#ff2244]/20 text-[#ff2244] border border-[#ff2244]/30' : 'bg-[#ffcc00]/20 text-[#ffcc00] border border-[#ffcc00]/30'}`}>
-                            {s.impact}
-                          </span>
-                          <span className="text-[10px] text-[rgba(255,119,0,0.6)] font-bold uppercase">{s.time} {s.country}</span>
-                        </div>
-                        <span className="text-[11px] text-[#00ff9d] font-mono font-black tracking-widest">{s.forecast}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                         <span className="text-[10px] text-[rgba(255,238,221,0.9)] font-medium truncate w-32">{s.event}</span>
-                         <span className="text-[8px] text-[rgba(255,119,0,0.4)] font-mono">PREV: {s.prev}</span>
-                      </div>
-                   </div>
-                 ))}
-              </div>
+              <p className="text-[11px] text-[rgba(255,238,221,0.7)]">Ekonomi takvimi canlı panoda, gerçek kaynaktan gelir.</p>
            </div>
         </div>
 
@@ -438,7 +384,7 @@ export function Overview() {
                <span className="text-[11px] font-black text-[#ff7700] tracking-[0.2em] uppercase">Hyperlink Synchronization: Finalized</span>
             </div>
             <div className="h-5 w-[1px] bg-[rgba(255,119,0,0.2)]" />
-            <span className="text-[10px] font-mono text-[rgba(255,119,0,0.4)] truncate max-w-[400px]">SRC: FINNHUB_WSS + BINANCE_GLOBAL_TICKER + WB_IND_API</span>
+            <span className="text-[10px] font-mono text-[rgba(255,119,0,0.4)] truncate max-w-[400px]">SRC: /api/snapshot</span>
          </div>
          <div className="text-lg font-mono font-black text-[#ff7700] tracking-[0.3em] tabular-nums">{clock}</div>
       </div>

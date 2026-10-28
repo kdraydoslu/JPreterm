@@ -53,16 +53,16 @@ export async function GET() {
 
         for (let i = 0; i < Math.min(itemMatches.length, 6); i++) {
           const rawItem = itemMatches[i]
-          const titleMatch = rawItem.match(/<title>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/title>/is)
+          const titleMatch = rawItem.match(/<title>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/title>/i)
           const title = cleanText(titleMatch ? (titleMatch[1] || titleMatch[2] || '') : '')
 
-          const descMatch = rawItem.match(/<description>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/description>/is)
+          const descMatch = rawItem.match(/<description>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/description>/i)
           const content = cleanText(descMatch ? (descMatch[1] || descMatch[2] || '') : '')
 
-          const pubDateMatch = rawItem.match(/<pubDate>(.*?)<\/pubDate>/is)
+          const pubDateMatch = rawItem.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)
           const pubDate = pubDateMatch ? pubDateMatch[1].trim() : ''
 
-          const linkMatch = rawItem.match(/<link>(?:<!\[CDATA\[(.*?)\]\]>|(.*?))<\/link>/is)
+          const linkMatch = rawItem.match(/<link>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/link>/i)
           const url = (linkMatch ? (linkMatch[1] || linkMatch[2] || '') : '').trim()
 
           if (!title) continue

@@ -23,8 +23,8 @@ const rajdhani = Rajdhani({
 })
 
 export const metadata: Metadata = {
-  title: 'JARVIS PRE TERM — Advanced Trading Terminal',
-  description: 'Professional Multi-Market Trading Terminal with Real-Time Analytics',
+  title: 'JARVIS PRE TERM — Canlı Pano',
+  description: 'Endeks, hisse, kur, emtia, faiz ve makro verilerin canlı panosu',
   generator: 'v0.app',
 }
 
@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-[#020810]">
+    <html lang="tr" className="bg-[#050100]">
       <body
         className={`${shareTechMono.variable} ${orbitron.variable} ${rajdhani.variable} font-mono antialiased`}
       >

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { marketDataService } from '@/lib/market-data'
-import { polymarketService, type Position as PolyPosition, type WalletBalance } from '@/lib/polymarket-service'
 import { ExternalLink, Wallet, TrendingUp, TrendingDown, Briefcase } from 'lucide-react'
 
 interface Position {
@@ -220,38 +219,10 @@ function PersonalFinanceWidget() {
 
 // ── Ana Portfolio bileşeni ─────────────────────────────────────────────────
 export function Portfolio() {
-  const [positions, setPositions] = useState<Position[]>([])
-  const [polyPositions, setPolyPositions] = useState<PolyPosition[]>([])
-  const [totalValue, setTotalValue] = useState(0)
-  const [totalPnL, setTotalPnL] = useState(0)
-  const [dailyPnL, setDailyPnL] = useState(0)
-  const [balance, setBalance] = useState<WalletBalance>({ usdc: 0, eth: 0, available: 0 })
-  const [isConfigured, setIsConfigured] = useState(false)
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedConfig = localStorage.getItem('polymarket_config')
-      if (savedConfig) {
-        setIsConfigured(true)
-        polymarketService.fetchBalance().then(setBalance)
-        polymarketService.fetchPositions().then(setPolyPositions)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isConfigured) return
-    const interval = setInterval(() => {
-      polymarketService.fetchBalance().then(setBalance)
-      polymarketService.fetchPositions().then(setPolyPositions)
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [isConfigured])
-
-  useEffect(() => {
-    setTotalValue(balance.usdc + (balance.eth * 3500))
-    setTotalPnL(polyPositions.reduce((acc, p) => acc + p.pnl, 0))
-  }, [balance, polyPositions])
+  const [positions] = useState<Position[]>([])
+  const totalValue = 0
+  const totalPnL = 0
+  const dailyPnL = 0
 
   const totalPositionPnL = positions.reduce((sum, pos) => sum + pos.pnl, 0)
 
@@ -269,7 +240,7 @@ export function Portfolio() {
             <div className="font-[var(--font-orbitron)] text-2xl text-[#ff7700] mb-2 font-bold">
               ${totalValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             </div>
-            <div className="text-[#00ff9d] text-base font-semibold">+2.34% (24h)</div>
+            <div className="text-[rgba(255,119,0,0.45)] text-sm">Canlı portföy bağlı değil</div>
           </div>
 
           <div className="bg-[rgba(10,3,0,0.6)] border border-[rgba(255,119,0,0.2)] rounded-lg p-6">
